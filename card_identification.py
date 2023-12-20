@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 # card_identification.py
-V 1.0
+V 1.1
 Created on Thu Nov 16 08:39:30 2023
 
 @author: Felix Scope
