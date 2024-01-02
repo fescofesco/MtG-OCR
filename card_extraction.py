@@ -1,18 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-# card_identification.py
-V 1.0
+# card_extraction.py
+
 Created on Thu Nov 16 08:39:30 2023
 
 @author: Felix Scope
 
-
-This scirpt allows card identification of images. Only one card per
+This scirpt allows card extraction of images. Only one card per
 image, but easy implementable to allow more. Currently the whole card must be 
 visisble.
 
 Main function is 
-    identify_card(path_to_img_folder, verbose=1):
+    extract_card(path_to_img_folder,direcotry = "ImgStorage", verbose=1):
 
 """
 
@@ -21,8 +20,7 @@ import cv2
 import imutils
 import numpy as np
 
-
-def identify_card(path_to_img, verbose=0):
+def extract_card(path_to_img, verbose=0):
     """
     Identifies the card in an image and returns a image containing just the
     card. 
@@ -54,44 +52,50 @@ def identify_card(path_to_img, verbose=0):
     -------
     result : CV2 image of containing only the exracted card
             or None if no card area was found..
-
-    """
+    error_message: error_message if no contours were found
     
+    "Image not loaded. Check the image path"
+    "Contours not found"
+    
+    """
+    # Check if jpg or filename withoug .jpg was provided
     if not path_to_img.endswith('.jpg'):
         path_to_img = path_to_img + '.jpg'
-        
+    
+
     if not os.path.isabs(path_to_img):  # Check if the path is relative
-        full_path = os.path.join("Img Storage", path_to_img)
+        full_path = os.path.join(path_to_img)
     else:
         full_path = path_to_img  # Use the provided full path
                 
     if verbose >= 2:
-        print(full_path)
+        print("path of image: ", full_path)
         
-    # 1) Taking in our image input and resizing its width to 300 pixels for 
-    #  easier contur identification
     original_image = cv2.imread(full_path)
     
     if original_image is None:
-        print("Image not loaded. Check the image path.")
-        return None
+        error_message = "Image not loaded. Check the image path"
+        if verbose >0: print(error_message)
+        return None, error_message
     else:
        # Proceed with image processing
        # image is the resized small image -> easier card contur identification 
+       # 1) Taking in our image input and resizing its width to 300 pixels for 
+       # easier contur identification
        image = imutils.resize(original_image, width=300)
     
-    
-    if verbose ==2:
+    if verbose >=2:
         cv2.imshow("original image", image)
     
     # 2) Converting the input image to greyscale
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    if verbose ==2:
+    if verbose >=2:
         cv2.imshow("greyed image", gray_image)
-    
+     
+
     # 3) Reducing the noise in the greyscale image
     gray_image = cv2.bilateralFilter(gray_image, 11, 17, 17) 
-    if verbose ==2:
+    if verbose >=2:
         cv2.imshow("smoothened image", gray_image)
     
     # 4) Detecting the edges of the smoothened image
@@ -99,46 +103,69 @@ def identify_card(path_to_img, verbose=0):
     if verbose >=2:
         cv2.imshow("edged image", edged)
         
-    # 5) Finding the contours from the edged image
-    cnts,_ = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL, 
+    
+    # 5) Dilate the image to join the edge
+    # Calculate the percentage value for the kernel size
+    kernel_percentage = 0.01  # Set the percentage 
+    
+    # Calculate the kernel size based on image width and height
+    image_height, image_width = image.shape[:2]  # Retrieve image dimensions
+    kernel_width = int(image_width * kernel_percentage)
+    kernel_height = int(image_height * kernel_percentage)
+
+    # Create a variable-sized kernel for dilation, 1 % of image size
+    kernel = np.ones((kernel_width, kernel_height), np.uint8)
+    
+    # Dilating the edges using the variable-sized kernel
+    dilated_edges = cv2.dilate(edged.copy(), kernel, iterations=1)
+    
+ 
+    # 6) Finding the contours from the edged image
+    # cv2.RETR_EXTERNAL... retrieve only the most external controus,
+    # cv2.chain_approx_simple ... and copy only the corners of defining points
+    cnts,_ = cv2.findContours(dilated_edges.copy(), cv2.RETR_EXTERNAL, 
                                 cv2.CHAIN_APPROX_SIMPLE)
-    image1=image.copy()
-    cv2.drawContours(image1,cnts,-1,(0,255,0),3)
-    if verbose >=2:
+
+    if verbose >=2:     # display the contours
+        image1=image.copy()
+        cv2.drawContours(image1,cnts,-1,(0,255,0),3)
         cv2.imshow("contours external",image1)
         
-    # 6) Sorting the identified contours
-    cnts = sorted(cnts, key = cv2.contourArea, reverse = True)[:4]
+    # 7) Sorting the identified contours - > getting the contour with the most 
+    # area
+    cnts_sorted = sorted(cnts, key = cv2.contourArea, reverse = True)[:1]
     screenCnt = None
     
     if verbose >= 2:
         image2 = image.copy()
-        cv2.drawContours(image2,cnts,-1,(0,255,0),2)
+        cnts_top4 = sorted(cnts, key = cv2.contourArea, reverse = True)[:4]
+        cv2.drawContours(image2,cnts_top4,-1,(0,255,0),2)
         display_image("Top 4 contours",image2)
  
-    # 7) Finding the contour with four sides
-    for c in cnts:
+    # 8) convert it to a contour with 4 sides
+    for c in cnts_sorted:
         perimeter = cv2.arcLength(c, True)
-        approx = cv2.approxPolyDP(c, 0.018 * perimeter, True)
+        approx = cv2.approxPolyDP(c, 0.025 * perimeter, True)
         if len(approx) == 4: 
-            screenCnt = approx
+            screenCnt = approx      
     
+    # no contour with 4 sides was found, redo contours by thresshold
     if screenCnt is None:
-        if verbose > 0:
-            print("redo contours")
+        if verbose > 1:
+            print("redo contours by frame threshold")
         
         frame_threshold = cv2.inRange(image.copy(), (0, 0, 0), (179, 88, 255))
-       
-       
+      
         # 5) Finding the contours from the edged image
         cnts,_ = cv2.findContours(frame_threshold, cv2.RETR_EXTERNAL, 
                                     cv2.CHAIN_APPROX_SIMPLE)
+       
         image1=frame_threshold.copy()
         cv2.drawContours(image1,cnts,-1,(0,255,0),3)
         if verbose >=2:
             cv2.imshow("contours external redone after filter 2",image1)
            
-       
+      
         # 7) Finding the contour with four sides
         for c in cnts:
             perimeter = cv2.arcLength(c, True)
@@ -181,11 +208,10 @@ def identify_card(path_to_img, verbose=0):
             
             # Draw the trapezoid on the masked_image
             cv2.polylines(masked_image, [corners_int32], isClosed=True, 
-                          color=(255, 0, 255), thickness=3)
+                          color=(255, 0, 255), thickness=10)
             
             display_image(
                 'Trapezoid on Original Image - Area to extract', masked_image)
-    
     
         # Suggest the card dimensions based on a bounding rectangle of the area
         #  to be extracted, suggest x,y,w width, h height.
@@ -205,12 +231,10 @@ def identify_card(path_to_img, verbose=0):
         #  Align the corners in the same direction as the corners of the img 
         # before by using the same function
         target_corners_b = corner_points(target_corners)
-                                        
         # Reshape to 4x2 matrix
         original_corners = original_corners.reshape(-1, 2)  
         # Convert to float32
         original_corners = original_corners.astype(np.float32)  
-        
         # Crate the transformation matrix
         matrix = cv2.getPerspectiveTransform(original_corners, 
                                              target_corners_b)
@@ -223,19 +247,18 @@ def identify_card(path_to_img, verbose=0):
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
-        return result
+        return result, None
        
     else:
         
         # Add an indication if the contour isn't found
+        error_message = "Contours not found"
         if verbose > 0:
-            print("Contour not found for:", path_to_img)  
-        
-
+            print(error_message, " for ", path_to_img)  
         cv2.waitKey(0)
         cv2.destroyAllWindows()
         
-        return None
+        return None, error_message
 
 def display_image(name, image, width=600):
     """
@@ -255,17 +278,16 @@ def display_image(name, image, width=600):
 
     Returns
     -------
-    None.
+    None. but shows the resizable image
 
     """
-
     # Display the image in a resizable manner
     cv2.namedWindow(name, cv2.WINDOW_KEEPRATIO)
     length = int(width * image.shape[0] / image.shape[1])
     cv2.resizeWindow(name, width, length)
     cv2.imshow(name, image)
 
-def corner_points(input_corners):
+def corner_points(input_corners):    
     """
     Identify the top right, top left, bottom right, bottom left corners 
 
@@ -281,13 +303,10 @@ def corner_points(input_corners):
         same as input but ordered
 
     """
- 
     # Calculate Center of Gravity (COG)
     cog_x = np.mean(input_corners[:, 0])
     cog_y = np.mean(input_corners[:, 1])
     
-    # print(input_corners)
-  
     # Determine corners based on their position relative to the COG
     corners = {
         "top_left": None,
@@ -332,13 +351,24 @@ def corner_points(input_corners):
     ], dtype=np.float32)
 
     return corners
+
 if __name__ == "__main__":
-    identify_card("test.jpg",1)
-    identify_card("7.jpg",1)
+    # use relative path
+    card,error  = extract_card("ImgStorage/test.jpg", 2)
+    if error != None:
+        print(error)
+        
+    # This card is not defined, program shall not crash
+    card,error  = extract_card("card_not_found.jpg", 2)
+    if error != None:
+        print(error)
+    extract_card("ImgStorage/7.jpg", verbose = 1)
     
-
-
- 
+    # use full path
+    card,error = extract_card('C:/Users/unisp/Documents/Infoprojekte/MtG-OCR/ImgStorage/IMG_20231222_111834.jpg', verbose=2)
+    if error != None:
+        print(error)
+  
     
     
     

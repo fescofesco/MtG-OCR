@@ -211,6 +211,46 @@ class MtGOCRData(ConfigHandler):
         self.parameters_config["phone_IMG_directory"] = value
         self.save_config()
 
+    def save_coordinates(self, mode, coordinates):
+        with open('parameters.txt', 'r') as file:
+            data = json.load(file)
+
+        if mode not in data:
+            data[mode] = []  # Create an empty list for the mode if it doesn't exist
+
+        data[mode].append(coordinates)  # Append the new coordinates to the list
+
+        with open('parameters.txt', 'w') as file:
+            json.dump(data, file, indent=2)  # Save the updated data back to the file
+            
+  
+
+        
+    def get_coordinates_from_file(self, mode):
+        """
+        gets the coordinates of the fie from the paramters.txt file 
+
+        Parameters
+        ----------
+        mode : STR
+            'ui', 'name' or 'exp'
+
+        Returns
+        -------
+        TYPE
+            DESCRIPTION.
+
+        """
+        with open('parameters.txt', 'r') as file:
+            data = json.load(file)
+
+        if mode in data:
+            return data[mode]
+        else:
+            print("Error, parameters.txt not found or mode not found.")
+            print(" mode: ", mode)
+            
+            return None
 
 
     def get_latest_scryfall_file(self):

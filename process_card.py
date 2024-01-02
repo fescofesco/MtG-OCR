@@ -9,9 +9,11 @@ import cv2
 import json
 import os
 from card_identification import identify_card
+from configuration_handler import MtGOCRData
 
 
-def create_rois_from_filename(filename, card= None):
+
+def create_rois_from_filename(filename, mtg_ocr_data, card= None):
     """
     this is the main function of process_cards.py
     here, by providing a filename and possibly a card, ROIs (snippets of region
@@ -55,7 +57,7 @@ def create_rois_from_filename(filename, card= None):
     modes = ["exp", "ui", "name"]
 
     for mode in modes:
-        coordinates = get_coordinates_from_file(mode)
+        coordinates = mtg_ocr_data.get_coordinates_from_file(mode)
         generated_roi = get_roi(card, coordinates, title=title, verbose=0)
         for i, roi in enumerate(generated_roi):
             safe_card_roi(roi, title=f"{title}", mode=mode)
@@ -144,7 +146,7 @@ def get_roi(card, coordinates=[[0.813, 0.56],[0.91, 0.63]], title="roi1", verbos
 
 def click_event(event, x, y, flags, param):
     """
-    Remembers the clicks on an image to define rectangles as future ROIS for 
+    Remembers the last 2 clicks on an image to define rectangles as future ROIS for 
     subsequent OCR recognition. Saves the coordinates.
 
     Parameters
@@ -152,9 +154,9 @@ def click_event(event, x, y, flags, param):
     event : TYPE
         you can click 2 times.
     x : TYPE
-        DESCRIPTION.
+        x coordinates of clicked point
     y : TYPE
-        DESCRIPTION.
+        y coordinates of clicked point
     flags : TYPE
         DESCRIPTION.
     param : TYPE
@@ -178,7 +180,7 @@ def draw_rectangle(image, points, param):
 
     Parameters
     ----------
-    image : TYPE
+    image : cv2 image
         DESCRIPTION.
     points : TYPE
         DESCRIPTION.
@@ -195,7 +197,7 @@ def draw_rectangle(image, points, param):
         cv2.rectangle(img_copy, points[0], points[1], (0, 255, 0), thickness=2)
         cv2.imshow(param['window_name'], img_copy)
 
-def get_relative_coordinates(image, window_name='UI identifier, q to quit. Click coner points of UI, exp symbol or name and press enter after each selsection',
+def get_relative_coordinates(image, mtg_data, mtg_ocr_data, window_name='UI identifier, q to quit. Click coner points of UI, exp symbol or name and press enter after each selsection',
                              verbose =0, max_width=800, max_height=600):
     """
     this function help setting the coordinates for ui (unique identifier), name
@@ -265,7 +267,7 @@ def get_relative_coordinates(image, window_name='UI identifier, q to quit. Click
                 
                 # coordinates = tuple(relative_coordinates)
                 mode = determine_mode(relative_coordinates[0][1])  # Determine mode based on y position
-                save_coordinates(mode, coordinates)  # Save coordinates to file based on mode
+                mtg_ocr_data.save_coordinates(mode, coordinates)  # Save coordinates to file based on mode
                 get_roi(image, coordinates)  # Call get_roi function with mode and coordinates
                 cv2.imshow(window_name, resized_image)
                 cv2.setMouseCallback(window_name, click_event, param)
@@ -277,19 +279,9 @@ def get_relative_coordinates(image, window_name='UI identifier, q to quit. Click
     cv2.destroyAllWindows()
 
 
-def save_coordinates(mode, coordinates):
-    with open('parameters.txt', 'r') as file:
-        data = json.load(file)
 
-    if mode not in data:
-        data[mode] = []  # Create an empty list for the mode if it doesn't exist
 
-    data[mode].append(coordinates)  # Append the new coordinates to the list
-
-    with open('parameters.txt', 'w') as file:
-        json.dump(data, file, indent=2)  # Save the updated data back to the file
-
-def determine_mode(y_coordinate):
+def determine_mode(self, y_coordinate):
     """
     depends the relative height of the roi measured from the top of the card 
     to save it accordingly to either 
@@ -319,34 +311,10 @@ def determine_mode(y_coordinate):
     elif 0.71 <= y_coordinate <= 1:
         return 'ui'
     else:
+        print("determine_mode in process_card.py: wrong mode submitted \
+              to determine_mode")
         return 'unknown'
-
     
-def get_coordinates_from_file(mode):
-    """
-    gets the coordinates of the fie from the paramters.txt file 
-
-    Parameters
-    ----------
-    mode : STR
-        'ui', 'name' or 'exp'
-
-    Returns
-    -------
-    TYPE
-        DESCRIPTION.
-
-    """
-    with open('parameters.txt', 'r') as file:
-        data = json.load(file)
-
-    if mode in data:
-        return data[mode]
-    else:
-        print("Error, parameters.txt not found or mode not found.")
-        print(" mode: ", mode)
-        
-        return None
 
 
 def safe_card_roi(card_roi, title='filename', mode='roi', verbose=0):
@@ -370,13 +338,14 @@ def safe_card_roi(card_roi, title='filename', mode='roi', verbose=0):
             
             
 if __name__ == "__main__":
-     
+    mtg_ocr_data  = MtGOCRData()
+
     filename = "1.jpg"
     card = identify_card(filename,0)
-    create_rois_from_filename(filename, card)
+    create_rois_from_filename(filename, mtg_ocr_data, card)
     
 
     filename = "IMG_20231213_212201.jpg"
-    create_rois_from_filename(filename)
+    create_rois_from_filename(filename, mtg_ocr_data, card)
    
 
