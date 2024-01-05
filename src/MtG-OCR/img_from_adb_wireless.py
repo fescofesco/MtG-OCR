@@ -2,9 +2,9 @@
 """
 Created on Wed Dec 13 20:42:50 2023
 
-@author: unisp
+@author: Felix Scope
 
-img_from_adb.py
+img_from_adb_wireless.py
 
 main function is transfer_images_from_device()
 
@@ -23,7 +23,7 @@ from datetime import datetime
     
 
     
-def transfer_images_from_device(source_folder="MTG-OCR", 
+def transfer_images_from_device_wireless(source_folder="MTG-OCR", 
                     destination_subfolder="ImgStorage", verbose = 0):
     """
     transfers images from the android device from subfodler MTG-OCR 
@@ -59,6 +59,23 @@ def transfer_images_from_device(source_folder="MTG-OCR",
     None
         No output but files get transferred.
 
+    """
+    
+    # Define the IP address of your Android device for wireless ADB
+    device_ip = 'your_device_ip_address'  # Replace with your device's IP
+    
+    # Construct the ADB command with the device's IP address
+    adb_command = f"adb connect {device_ip}"
+
+    # Execute the ADB command to connect via WLAN
+    subprocess.run(adb_command, shell=True)
+    
+    # Check if the device is connected
+    if not is_device_connected():
+        print("Device is not connected.")
+        return None
+    else:
+        print("connected")
     """
     # Check if the device is connected
     if not is_device_connected():
@@ -147,7 +164,7 @@ def transfer_images_from_device(source_folder="MTG-OCR",
                   " and removed from the device.")
 
     
-    
+    """
 # def transfer_images_from_device(source_folder="MTG-OCR", 
 #                     destination_subfolder="ImgStorage", verbose = 0):
 #     """
@@ -336,13 +353,13 @@ if __name__ == "__main__":
     date = datetime.now().strftime("%Y-%m-%d")
 
     # Call the function with the current date for the destination_subfolder
-    transfer_images_from_device(
+    transfer_images_from_device_wireless(
         source_folder="MTG-OCR",
         destination_subfolder="ImgStorage\\" + date,
         verbose=1
     )
     
     
-transfer_images_from_device(
+    transfer_images_from_device_wireless(
     source_folder="MTG-OCR",
     destination_subfolder="tests", verbose=1)

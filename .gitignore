@@ -3,6 +3,8 @@
 cubecobralogin.txt
 
 default-cards-*.json
+.notimplemented/
+notimplemented/
 
 
 # Byte-compiled / optimized / DLL files

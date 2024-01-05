@@ -1,0 +1,7 @@
+imutils==0.5.4
+numpy==1.25.1
+opencv_python==4.8.0.74
+pytesseract==0.3.10
+python_Levenshtein==0.23.0
+Requests==2.31.0
+setuptools==67.8.0
