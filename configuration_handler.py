@@ -495,34 +495,34 @@ The default values are defining two edges of a rectanlge of the card snippet
                   to determine_mode")
             return 'unknown'    
         
-        def get_coordinates_from_file(self, mode):
-            """
-            gets the coordinates of the fie from the paramters.txt file 
-    
-            Parameters
-            ----------
-            mode : STR
-                'ui', 'name' or 'exp'
-    
-            Returns
-            -------
-            list of  lists of coordinates where the ROIS are extracted from
-                [[[x_a1,y_a1],[x_a2,y_a2]],[[x_b1,y_b1],[x_b2,y_b2]],...]
-                
-    
-            """
-            with open('parameters.txt', 'r') as file:
-                data = json.load(file)
-    
-            if mode in data:
-                return data[mode]
-            else:
-                print("Error, parameters.txt not found or mode not found.")
-                print(" mode: ", mode)
-                
-                print("Define extractino area:")
-                
-                return None
+    def get_coordinates_from_file(self, mode):
+        """
+        gets the coordinates of the fie from the paramters.txt file 
+
+        Parameters
+        ----------
+        mode : STR
+            'ui', 'name' or 'exp'
+
+        Returns
+        -------
+        list of  lists of coordinates where the ROIS are extracted from
+            [[[x_a1,y_a1],[x_a2,y_a2]],[[x_b1,y_b1],[x_b2,y_b2]],...]
+            
+
+        """
+        with open('parameters.txt', 'r') as file:
+            data = json.load(file)
+
+        if mode in data:
+            return data[mode]
+        else:
+            print("Error, parameters.txt not found or mode not found.")
+            print(" mode: ", mode)
+            
+            print("Define extractino area:")
+            
+            return None
 
 
     def get_latest_scryfall_file(self):
