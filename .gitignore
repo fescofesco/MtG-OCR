@@ -6,6 +6,12 @@ default-cards-*.json
 .notimplemented/
 notimplemented/
 
+data/Card_Identification/processed_ROIs/
+data/Card_Identification/final_ROIs/
+data/Card_Identification/config/
+data/Card_Identification/results/
+
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

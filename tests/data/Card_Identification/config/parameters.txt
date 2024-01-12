@@ -1,0 +1,43 @@
+{
+  "phone_IMG_directory": null,
+  "scryfall_file_date": "2024-01-07 22:05:08",
+  "ui": [
+    [
+      [
+        0.12149532,
+        0.928333
+      ],
+      [
+        0.2453,
+        0.973
+      ]
+    ]
+  ],
+  "exp": [
+    [
+      [
+        0.8137,
+        0.5616
+      ],
+      [
+        0.925,
+        0.6366
+      ]
+    ]
+  ],
+  "name": [
+    [
+      [
+        0.10983,
+        0.085
+      ],
+      [
+        0.9088,
+        0.135
+      ]
+    ]
+  ],
+  "Mtg_letters": [
+    "WdE&Su0\u00e261fF(4O\u00fctkJ\u00f6nZz\u00f1y\u00c9YICNla\\'_ \u00edcjh\u00e19\u00fa\u00e3HX\u0160M\u00e0s7Pp\u00f3\u00fb8v+:\u00e9beq3L-TiVwm?Qx\u00e4\\\"goGDU\u00aeA!K2/rB.),R"
+  ]
+}
