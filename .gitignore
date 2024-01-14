@@ -6,6 +6,7 @@ default-cards-*.json
 .notimplemented/
 notimplemented/
 
+!.gitkeep
 data/Card_Identification/processed_ROIs/
 data/Card_Identification/final_ROIs/
 data/Card_Identification/config/
