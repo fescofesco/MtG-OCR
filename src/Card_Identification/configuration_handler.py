@@ -168,10 +168,7 @@ The default values are defining two edges of a rectanlge of the card snippet
             "Mtg_letters": ["WdE&Su0\u00e261fF(4O\u00fctkJ\u00f6nZz\u00f1y\u00c9YICNla\\'_ \u00edcjh\u00e19\u00fa\u00e3HX\u0160M\u00e0s7Pp\u00f3\u00fb8v+:\u00e9beq3L-TiVwm?Qx\u00e4\\\"goGDU\u00aeA!K2/rB.),R"]
             }
 
-        with open(get_path("config",self.parameters_file), "w") as f:
-            json.dump(default_config, f, indent=2)
-            
-        
+        # No need to save twice here right?
         self.parameters_config = default_config      
         self.save_config()
         

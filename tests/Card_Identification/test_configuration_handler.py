@@ -17,7 +17,7 @@ import sys
 import os
 # Add the project root directory to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from configuration_handler import MtGOCRData, CubeCobraData
+from src.Card_Identification.configuration_handler import MtGOCRData, CubeCobraData
 
 
 class TestIdentifyCard(unittest.TestCase):

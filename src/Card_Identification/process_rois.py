@@ -162,7 +162,7 @@ def return_cardname_from_ROI(filename, scryfall_all_data, verbose = 0):
             potential_letters = MtGOCRData().get_Mtg_letters()
             roi_info = name_roi
             pot_cardname = [''.join(extract_name_info(roi_info, potential_letters, verbose))]
-            if verbose > 1 print(pot_cardname)
+            if verbose > 1: print(pot_cardname)
            
             # pot_cardname = [''.join(extract_name_info(roi_info, verbose))]
 
@@ -335,7 +335,7 @@ def extract_set_info(set_code_roi,verbose = 0):
 
     if verbose >= 2:
         print("found text:", set_code_text) 
-        print("from: ", set_code_text1)
+        # print("from: ", set_code_text1) # What do you want to print here?
     return pot_collecturnumber, pot_set, pot_rarity
 
 
