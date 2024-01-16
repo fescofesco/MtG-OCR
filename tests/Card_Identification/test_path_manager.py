@@ -13,36 +13,30 @@ import unittest
 from unittest.mock import patch
 import os
 from pathlib import Path
-from src.Card_Identification.path_manager import (
-get_path, return_folder_contents
-)
+from enum import Enum
+
+from src.Card_Identification.path_manager import (get_path, return_folder_contents, PathType)
+
+class PathType(Enum):
+    BASE_DIR = Path(__file__).resolve().parent.parent.parent
+    RESULTS = str(BASE_DIR /'tests' / 'data' / 'Card_Identification' / 'results')
+    RAW_IMAGE = str(BASE_DIR /'tests' / 'data' / 'Card_Identification' / 'raw_IMGs')
+    PROCESSED_ROI = str(BASE_DIR / 'tests' /'data' / 'Card_Identification' / 'processed_ROIs')
+    FINAL_ROI = str(BASE_DIR /'tests' / 'data' / 'Card_Identification' / 'final_ROIs')
+    CONFIG = str(BASE_DIR /'tests' /  'data' /'Card_Identification' / 'config')
 
 
-
-
-class TestPathManager(unittest.TestCase):
-    BASE_DIR = Path(__file__).resolve().parent.parent.parent  # Adjust the parent calls as needed
-    TEST_IMG_STORAGE_PATH = str(BASE_DIR /'tests'/ 'data' / 'Card_Identification' / 'raw_IMGs')
-    TEST_ROI_PROCESSED_STORAGE_PATH = str(BASE_DIR /'tests' / 'data' / 'Card_Identification' / 'processed_ROIs')
-    TEST_SCRYFALL_STORAGE_PATH = str(BASE_DIR /'tests'/ 'data' / 'Card_Identification' / 'config')
-    TEST_ROI_FINAL_STORAGE_PATH = str(BASE_DIR/'tests'/  'data' / 'Card_Identification' / 'final_ROIs')
-    
-    
-    
-    @patch('src.Card_Identification.path_manager.IMG_STORAGE_PATH', TEST_IMG_STORAGE_PATH)
-    def test__raw_image_coontents(self):
-        path_to_test_folder =get_path("raw_image")
-        contents_test_folder = return_folder_contents(path_to_test_folder)
-        expected_contents = ['1.jpg', '2.jpg', '2023-12-24', '3.jpg', '4.jpg']              
-        self.assertEqual(contents_test_folder, expected_contents)           
-                  
-    def test_get_scryfall_path(self):
-        get_path("config",verbose=1)
+@patch('src.Card_Identification.path_manager.PathType', PathType)
+class TestIdentifyCard(unittest.TestCase):
+        def test_raw_image_contents(self):
+            """" Checks if the contents of the raw_image are correct"""
+            path_to_test_folder = get_path(PathType.RAW_IMAGE,verbose =0)
+            print("func",path_to_test_folder)
+            contents_test_folder = return_folder_contents(path_to_test_folder)
+            expected_contents = ['1.jpg', '2.jpg', '2023-12-24', '3.jpg', '4.jpg']
+            self.assertEqual(contents_test_folder, expected_contents)
         
-        
+    
+    
 if __name__ == '__main__':
-    # print(TestPathManager.print_folder_contents())
     unittest.main()
-
-
-

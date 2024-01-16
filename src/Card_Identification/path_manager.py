@@ -61,79 +61,64 @@ MtG-OCR
 """
 import os
 from pathlib import Path
+from enum import Enum
 
-# Get the base directory where the project is located
-BASE_DIR = Path(__file__).resolve().parent.parent.parent  # Adjust the parent calls as needed
 
-IMG_STORAGE_PATH = str(BASE_DIR / 'data' / 'Card_Identification' / 'raw_IMGs')
-ROI_PROCESSED_STORAGE_PATH = str(BASE_DIR / 'data' / 'Card_Identification' / 'processed_ROIs')
-SCRYFALL_STORAGE_PATH = str(BASE_DIR / 'data' / 'Card_Identification' / 'config')
-ROI_FINAL_STORAGE_PATH = str(BASE_DIR / 'data' / 'Card_Identification' / 'final_ROIs')
-RESULTS_SORAGE_PATH = str(BASE_DIR / 'data' / 'Card_Identification' / 'results')
 
-def create_directory_if_not_exists(directory_path: str):
+class PathType(Enum):
+    BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+    RESULTS = str(BASE_DIR / 'data' / 'Card_Identification' / 'results')
+    RAW_IMAGE = str(BASE_DIR / 'data' / 'Card_Identification' / 'raw_IMGs')
+    PROCESSED_ROI = str(BASE_DIR / 'data' / 'Card_Identification' / 'processed_ROIs')
+    FINAL_ROI = str(BASE_DIR / 'data' / 'Card_Identification' / 'final_ROIs')
+    CONFIG = str(BASE_DIR / 'data' / 'Card_Identification' / 'config')
+
+def get_path(path_type: PathType = None, file_name: str = None, verbose: int = 0):
     """
-    create a directory on the path if it does not already exist
+    Returns the path to the image folders from the data folder. 
 
-    Parameters
-    ----------
-    directory_path : STR
-        path to directory
+    Parameters:
+        path_type (PathType, str, optional): Enum or a custom path. Default is None.
+        
+        supported path_types are:
+            
+        RESULTS
+        RAW_IMAGE
+        PROCESSED_ROI
+        FINAL_ROI
+        CONFIG
+        
+        and custum paths by
+        
+        file_name (str, optional): Filename. Default is None.
+        verbose (int, optional): If > 0, the contents of the directory are printed.
 
-    Returns
-    -------
-    None.
-
+    Returns:
+        str: Path to the folder. If filename is given, the returned path includes the filename.
+             If the filename is not given, the fodlder contents are returned.
     """
+    if path_type is None:
+        print("Provide a valid path_type or a custom path.")
+        return None
+
+    elif isinstance(path_type, PathType):
+        directory_path = path_type.value
+    elif isinstance(path_type, str):
+        if os.path.isabs(path_type):
+                directory_path = path_type
+        else:
+            # print(absolute_path)
+            absolute_path = str(PathType.BASE_DIR / path_type)
+            directory_path = absolute_path
+    else:
+        print("path type:", path_type)
+        print("Provide a valid path_type or a custom path.")
+        return None
+    
+    # Create directory if it does not exist
     if not os.path.exists(directory_path):
         os.makedirs(directory_path)
-        
-
-
-def get_path(path_type: str, file_name:str =None, verbose=0, create_folder=False):
-    """
-    
-    returns the path to the image folders form the data folder 
-
-    Parameters
-    ----------
-    path_type : str
-        DESCRIPTION.
-    file_name : str, optional
-        filename . The default is None.
-    verbose : TYPE, optional
-        DESCRIPTION. If >1 the contents of the directory are printed
-    create_folder : TYPE, optional
-        the folder is created if not present by calling create_folder(). The default is False.
-
-    Returns
-    -------
-    TYPE
-        path to the folder.
-        if filename is  given, the returned path includes the filename, 
-        if not, the returned filename 
-    """
-    path_dict = {
-        # 
-        'results' : (RESULTS_SORAGE_PATH),
-        #used by card_identification.py from card_extraction
-        'raw_image': (IMG_STORAGE_PATH),
-        # get the path to the produced ROI 
-        # from process_card.py for process_roi.py
-        'processed_roi': (ROI_PROCESSED_STORAGE_PATH),
-        # get the path to the final, identified ROI 
-        # from process_rois.py
-        'final_roi': (ROI_FINAL_STORAGE_PATH),
-        # get the path to the scryfall_data
-        'config': (SCRYFALL_STORAGE_PATH)
-    }
-
-    directory_path = path_dict[path_type]
-    
-
-
-    if not os.path.exists(directory_path) and create_folder:
-        create_directory_if_not_exists(directory_path)
 
     if file_name:
         path = os.path.join(directory_path, file_name)
@@ -151,39 +136,26 @@ def get_path(path_type: str, file_name:str =None, verbose=0, create_folder=False
                 print(item)
         return directory_path
 
-def return_folder_contents(path_to_folder = IMG_STORAGE_PATH):
+def return_folder_contents(path_to_folder : str):
+    """
+    returns all folder contents as a list
+    """
+
     # Get the list of all items in the folder
     all_items = os.listdir(path_to_folder)
 
     # Filter out only files and folders
-    contents = [item for item in all_items if os.path.isfile(os.path.join(path_to_folder, item)) or os.path.isdir(os.path.join(path_to_folder, item))]
+    contents = [item for item in all_items \
+                if os.path.isfile(os.path.join(path_to_folder, item)) \
+                    or os.path.isdir(os.path.join(path_to_folder, item))]
 
     return contents
 
 
-def display_folder_contents():
-    """
-    func to test if the paths are correct by displaying the folders contents
-
-    Returns
-    -------
-    None. But displays the folders contents.
-
-    """
-    print("Raw Image Path Contents:")
-    raw_image_contents = get_path("raw_image",verbose=1)
-    print("-------------------------")
-    print("Processed ROI Path Contents:")
-    processed_roi_contents = get_path("processed_roi",verbose=1)
-    print("-------------------------")
-    print("Final ROI Path Contents:")
-    processed_roi_contents = get_path("final_roi",verbose=1)
-    print("-------------------------")
-    print("Scryfall Path Contents:")
-    processed_roi_contents = get_path("config",verbose=1)
-    print("-------------------------")
-
 if __name__ == "__main__":
-    display_folder_contents()
-
-
+    
+    print(return_folder_contents(get_path(PathType.RESULTS)))
+    print(return_folder_contents(get_path(PathType.RAW_IMAGE)))
+    print(return_folder_contents(get_path(PathType.CONFIG)))
+    print(return_folder_contents(get_path(PathType.PROCESSED_ROI)))
+    print(return_folder_contents(get_path(PathType.FINAL_ROI)))

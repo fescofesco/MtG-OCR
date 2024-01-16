@@ -12,15 +12,15 @@ import cv2
 import datetime
 import time
 import os
-from img_from_adb import transfer_images_from_device
-from card_extraction import extract_card
-from src.Card_Identification.process_card import (create_rois_from_filename)
-from src.Card_Identification.process_rois import (return_cardname_from_ROI, display_cardname, delete_duplicate_ROIs)
-
-from src.Card_Identification.configuration_handler import MtGOCRData
-from src.Card_Identification.path_manager import get_path
 from pathlib import Path
 import json
+
+from src.Card_Identification.img_from_adb import transfer_images_from_device
+from src.Card_Identification.card_extraction import extract_card
+from src.Card_Identification.process_card import (create_rois_from_filename)
+from src.Card_Identification.process_rois import (return_cardname_from_ROI, display_cardname, delete_duplicate_ROIs)
+from src.Card_Identification.configuration_handler import MtGOCRData
+from src.Card_Identification.path_manager import (get_path, PathType)
 
 
 def process_files(directory, timeout=2):
@@ -101,7 +101,7 @@ def main_Card_Identification():
    
    verbose = 0
    # Create a generator for processing unprocessed files
-   file_generator = process_files(get_path("raw_image"))
+   file_generator = process_files(get_path(PathType.RAW_IMAGE))
    timeout = 10
    start_time = time.time()
    mtg_ocr_config = MtGOCRData()
@@ -111,7 +111,7 @@ def main_Card_Identification():
    while True:
        try:
            unprocessed_file = next(file_generator)
-           path = get_path("raw_image",unprocessed_file)
+           path = get_path(PathType.RAW_IMAGE,unprocessed_file)
    
            card, error = extract_card(path ,verbose)
            if error: print(error)

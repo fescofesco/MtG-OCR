@@ -26,7 +26,7 @@ import os
 import cv2
 import imutils
 import numpy as np
-from src.Card_Identification.path_manager  import get_path
+from src.Card_Identification.path_manager import (get_path, PathType)
 
 def extract_card(path_to_img, verbose=0):
     """
@@ -76,7 +76,7 @@ def extract_card(path_to_img, verbose=0):
     else:
         full_path = path_to_img  # Use the provided full path
                 
-    if verbose >= 2:
+    if verbose > 2:
         print("path of image: ", full_path)
         
     original_image = cv2.imread(full_path)
@@ -393,29 +393,6 @@ def path_to_img_storage(filename: str, verbose : int = 0):
      
      return image_path  
  
-
-if __name__ == "__main__": 
-
-     
-
-    filename = 'test.jpg'
-
-    # verbose 2
-    card,error  = extract_card(get_path("raw_image",filename), 2)
-    if error != None:
-        print(error)
-        
-    # This card is not defined, program shall not crash
-    filename = 'card_not_found.jpg'
-
-    card,error  = extract_card(get_path("raw_image",filename), 2)
-    if error != None:
-        print(error)
-   
-    #without .jpg
-    print("testing without .jpg")
-    filename = '7'
-    card,error  = extract_card(get_path("raw_image",filename), 2)
 
 
     

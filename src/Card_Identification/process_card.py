@@ -18,10 +18,9 @@ create_rois_from_filename(filename, mtg_ocr_config, card= None, verbose =0):
 """
 import cv2
 import os
-from card_extraction import extract_card
+from src.Card_Identification.card_extraction import extract_card
 from src.Card_Identification.configuration_handler import MtGOCRData
-from src.Card_Identification.path_manager import get_path
-
+from src.Card_Identification.path_manager import (get_path, PathType)
 
 def create_rois_from_filename(filename, mtg_ocr_config, card= None, verbose =0):
     """
@@ -58,7 +57,7 @@ def create_rois_from_filename(filename, mtg_ocr_config, card= None, verbose =0):
 
     """
     if card is None:
-       card = extract_card(get_path("raw_image",filename), verbose = 0)
+       card = extract_card(get_path(PathType.RAW_IMAGE,filename), verbose)
     
     mtg_ocr_config = MtGOCRData()
     
@@ -67,12 +66,12 @@ def create_rois_from_filename(filename, mtg_ocr_config, card= None, verbose =0):
 
     for mode in modes:
         coordinates = mtg_ocr_config.get_coordinates_from_file(mode)
-        generated_roi = get_roi(card, coordinates, title, verbose=0)
+        generated_roi = get_roi(card, coordinates, title, verbose)
         for i, roi in enumerate(generated_roi):
-            safe_card_roi(roi, title=f"{title}", mode=mode)
+            safe_card_roi(roi, title, mode, verbose)
 
 
-def get_roi(card, coordinates=[[0.813, 0.56],[0.91, 0.63]], title="roi1", verbose=1):
+def get_roi(card, coordinates=None, title=None, verbose=1):
     """
     Returns a ROI (region of interest) definded by the coordinates, the two 
     corner points defining a rectanlge from a provided cv2 image card.
@@ -113,62 +112,52 @@ def get_roi(card, coordinates=[[0.813, 0.56],[0.91, 0.63]], title="roi1", verbos
     output
     roi ... cv2 image inside the specified corner coordinats [[x0,y0],[x1,y1]]
 
-    Currently the return function does not work, only yield to create a generator
-    which can be unpacked with the fololwoing syntax
     """
+    if title is None:
+        title = "roi1"
+        
     if not isinstance(coordinates[0][0], list):
-        coordinates = [coordinates]
-      
-    # Currently the return function does not work, only yield to create a generator
-    # which can be unpacked with the fololwoing syntax
-    if len(coordinates) == 1:
-        coord_pair = coordinates[0]
+      coordinates = [coordinates]
+
+    for coord_pair in coordinates:
         x0, y0 = coord_pair[0]
         x1, y1 = coord_pair[1]
         height, width, _ = card.shape
         top_left = (int(width * x0), int(height * y0))
         bottom_right = (int(width * x1), int(height * y1))
         roi = card[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]]
-
+    
         if verbose > 0:
+            print(title)
             cv2.imshow(title, roi)
             cv2.waitKey(0)
-            cv2.destroyWindow(title)
-        return roi
-        
-    else:
-        for coord_pair in coordinates:
-            x0, y0 = coord_pair[0]
-            x1, y1 = coord_pair[1]
-            height, width, _ = card.shape
-            top_left = (int(width * x0), int(height * y0))
-            bottom_right = (int(width * x1), int(height * y1))
-            roi = card[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]]
-            
-            if verbose > 0:
-                cv2.imshow(title, roi)
-                cv2.waitKey(0)
-                cv2.destroyWindow(title)
-            yield roi  
-
+            if cv2.getWindowProperty(title, cv2.WND_PROP_VISIBLE) == 1:
+                  cv2.destroyWindow(title)
+        yield roi
+      
 
 def safe_card_roi(card_roi, title='filename', mode='roi', verbose=0):
- 
     # Find the version number for the filename
     version = 1
-    path_to_roi = get_path("processed_roi")
-    if verbose >0: print(path_to_roi)
+    path_to_roi = get_path(PathType.PROCESSED_ROI)
+    if verbose >1: print("path to roi", path_to_roi)
     while os.path.exists(f"{path_to_roi}/{title}_{mode}_{version}.jpg"):
         version += 1
 
     # Construct the filename using the mode, title, and version
     filename = f"{path_to_roi}/{title}_{mode}_{version}.jpg"
 
-    if verbose >0 : print(filename)
+    if verbose >1 : print("filename", filename)
     # Save the ROI with the constructed filename
-    cv2.imwrite(get_path("processed_roi",filename), card_roi)
+    if verbose > 1: print("safe card roi", get_path(PathType.PROCESSED_ROI, filename))
+    
+    print("error", get_path(PathType.PROCESSED_ROI, filename))
+    cv2.imshow("safecardroi present?", card_roi)
+    cv2.waitKey(0)
+
+    cv2.imwrite(get_path(PathType.PROCESSED_ROI, filename), card_roi)
     if verbose >0:
-        print("Try to write ROIs/{title}_{mode}_{version}.jpg",title,mode, version)
+        print(f"Try to write ROIs {title}_{mode}_{version}.jpg")
     
 def checkif_imageloaded(result, error_message = None):
     if error_message == "Image not loaded":
@@ -196,11 +185,13 @@ if __name__ == "__main__":
     #  get the necessary parameters from confiog parameters.txt handler
     mtg_ocr_config  = MtGOCRData()
 
-    
+    # put iamage as filename in path
+    path = get_path(PathType.RAW_IMAGE)
+    print(path)
     filename = "IMG_20231222_111834.jpg"  
-    filename = "1.jpg"
+    filename = "3.jpg"
   
-    path = get_path("raw_image", filename)
+    path = get_path(PathType.RAW_IMAGE, filename)
    
     card, error = extract_card(path,verbose = 2)
     if error != None:

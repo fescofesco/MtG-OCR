@@ -43,7 +43,6 @@ Levenshtein distance was implemented for name comparison.
 
 import pytesseract
 import cv2
-from configuration_handler import MtGOCRData
 from Levenshtein import distance as levenshtein_distance
 import os
 import re
@@ -51,7 +50,9 @@ from collections import Counter
 import json
 import filecmp
 import numpy as np
-from src.Card_Identification.path_manager  import (get_path, return_folder_contents)
+
+from src.Card_Identification.configuration_handler import MtGOCRData
+from src.Card_Identification.path_manager import (get_path, return_folder_contents, PathType)
 
 
 def return_cardname_from_ROI(filename, scryfall_all_data, verbose = 0):
@@ -107,7 +108,7 @@ def return_cardname_from_ROI(filename, scryfall_all_data, verbose = 0):
     
     if filename.endswith(".jpg"): filename = filename.strip(".jpg")
        
-    roi_directory = get_path("processed_roi")
+    roi_directory = get_path(PathType.PROCESSED_ROI)
     # Get the current working directory
    
     
@@ -119,9 +120,9 @@ def return_cardname_from_ROI(filename, scryfall_all_data, verbose = 0):
 
 
     # List all roi files in the directory
-    roi_files = return_folder_contents(get_path('processed_roi'))
+    roi_files = return_folder_contents(get_path(PathType.PROCESSED_ROI))
     if verbose >=3:
-        print(get_path('processed_roi',verbose = 1))
+        print(get_path(PathType.PROCESSED_ROI,verbose = 1))
 
     
     # Loop through each file
@@ -129,7 +130,7 @@ def return_cardname_from_ROI(filename, scryfall_all_data, verbose = 0):
         # Assuming UI ROIs have this naming convention
         if roi_file.startswith(f"{filename}_ui"): 
             
-            file_path = get_path("processed_roi",roi_file)
+            file_path = get_path(PathType.PROCESSED_ROI,roi_file)
             if verbose > 0:
                 print(file_path)
             # Read the image
@@ -150,7 +151,7 @@ def return_cardname_from_ROI(filename, scryfall_all_data, verbose = 0):
                 pot_rarities.extend(pot_rarity)
                 
         if roi_file.startswith(f"{filename}_name"): 
-            file_path = get_path("processed_roi",roi_file)
+            file_path = get_path(PathType.PROCESSED_ROI, roi_file)
             if verbose > 0:
                 print("filepath path", file_path)
            
@@ -167,26 +168,46 @@ def return_cardname_from_ROI(filename, scryfall_all_data, verbose = 0):
             # pot_cardname = [''.join(extract_name_info(roi_info, verbose))]
 
             if pot_cardname != []:
-                pot_cardnames.append(pot_cardname)
+                pot_cardnames.extend(pot_cardname)
     if verbose > 0: print("pot:cardnames: ",pot_cardnames)               
     # print("return_cardname_from_ROI \n find_cardname_byname:", pot_cardnameS)
-    cardname_by_name = find_cardname_byname(pot_cardnames, scryfall_all_data)
     
-    pot_sets = list(set(pot_sets))
-    pot_cardnames = list(set(pot_cardnames))
-    pot_rarities = list(set(pot_rarities))
-    pot_collectornumbers = list(set(pot_collectornumbers))
+    pot_cardnames = [name.lower() for name in pot_cardnames]
+
+    lists_to_update = [pot_sets, pot_cardnames, pot_collectornumbers, pot_rarities]
+    
+    # Remove specific characters
+    updated_lists_to_update = remove_specific_characters(lists_to_update)
+
+    # Ensure each sublist contains only unique elements
+    for i in range(len(updated_lists_to_update)):
+        if isinstance(updated_lists_to_update[i], list):
+            updated_lists_to_update[i] = list(set(updated_lists_to_update[i]))
+
+
+    pot_sets, pot_cardnames, pot_collectornumbers, pot_rarities = updated_lists_to_update
+      
+    cardname_by_name = find_cardname_byname(pot_cardnames, scryfall_all_data)
+
     if verbose >0 :
         print("cardname_by_name", cardname_by_name, "pot_sets", pot_sets, "pot_rarities", pot_rarities, "pot_collectornumbers", pot_collectornumbers)
 
+
     cardname = find_card_by_infos(pot_collectornumbers, pot_sets, pot_rarities, cardname_by_name, scryfall_all_data, verbose=0)
     
-    # cardname_by_UI = find_cardname_byUI(pot_collectornumberS, pot_setS, 
-    #                                    pot_rarityS, scryfall_all_data,verbose)
-    # # "compare cardname by name and cardname by UI to find the correct name"
-    # cardname = None
-    # cardname = cardname_by_comp_UI_name(cardname_by_name,cardname_by_UI)
     return cardname
+
+def remove_specific_characters(list_to_update):
+    updated_list = []
+    for item in list_to_update:
+        if isinstance(item, list):
+            # Recursively call remove_specific_characters() for sub-lists
+            updated_list.append(remove_specific_characters(item))
+        else:
+            # Apply remove_specific_characters() to individual strings
+            updated_list.append(re.sub(r"['\\/\~\n'>}]", '', str(item)))
+    return updated_list
+
 
 def find_card_by_infos(pot_collector_numbers, pot_sets, pot_rarities, pot_cardnames, scryfall_all_data, verbose=0):
 
@@ -199,7 +220,6 @@ def find_card_by_infos(pot_collector_numbers, pot_sets, pot_rarities, pot_cardna
             updated_pot_rarities.append("token")
             for pot_set in pot_sets:
                 if len(pot_set)==3:
-                    print(pot_set)
                     pot_set = 't' + pot_set
                     if verbose > 2: print(pot_set)
                     
@@ -482,15 +502,15 @@ def find_cardname_byname(pot_cardnameS, scryfall_all_data, verbose = 1):
 
     Parameters
     ----------
-    pot_cardnameS : list of strings
+    pot_cardnameS : list of strings ['Fury sliiver', 'FooD']
         potential cardnames
     scryfall_all_data : list of dicts
         scryfall data downloaded.
 
     Returns
     -------
-    closest_matches : TYPE
-        DESCRIPTION.
+    closest_matches : list of strings ['Fury Sliver', 'Food']
+        the closest match for each given pot_cardname
 
     """
     closest_matches = []
@@ -498,12 +518,15 @@ def find_cardname_byname(pot_cardnameS, scryfall_all_data, verbose = 1):
     if verbose >0: print("potential cardnames:", pot_cardnameS)
     
     for potential_name in pot_cardnameS:
+        print(potential_name)
         min_distance = float('inf')
         best_match = None
 
         for card_data in scryfall_all_data:
-            name = card_data['name'].split('//')[0].strip()  # Get the first name before '//'
-            distance = levenshtein_distance(name.lower(), potential_name[0].lower())  # Convert both to lowercase for case-insensitive comparison
+            # Get the first name before '//'
+            name = card_data['name'].split('//')[0].strip() 
+            # Convert both to lowercase for case-insensitive comparison
+            distance = levenshtein_distance(name.lower(), potential_name.lower())
 
             if distance < min_distance:
                 min_distance = distance
@@ -735,7 +758,7 @@ def delete_duplicate_ROIs(filename, verbose=0):
     if filename.endswith(".jpg"):
         filename = filename.strip(".jpg") 
     
-    roi_directory = get_path('processed_roi')
+    roi_directory = get_path(PathType.PROCESSED_ROI)
 
     roi_files = os.listdir(roi_directory)
     
@@ -823,10 +846,8 @@ if __name__ == "__main__":
     # Food Token ELD
     filename = "IMG_20231213_212201.jpg"
 
-    # Food Token ELD
-    filename = "1.jpg"
        
-    path = get_path("raw_image",filename)
+    path = get_path(PathType.RAW_IMAGE, filename,2)
     
 
     # # Directory path where the files are located

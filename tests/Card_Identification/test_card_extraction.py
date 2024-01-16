@@ -17,60 +17,67 @@ Main function is
 
 """
 
-
-# import unittest
-# import sys
-# import os
-# # Add the project root directory to sys.path
-# # sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-# from pathlib import Path
-# from src.Card_Identification.card_extraction import identify_card
-# from src.Card_Identification.path_manager import get_path
-
-
 import unittest
 from unittest.mock import patch
 import os
 from pathlib import Path
+
 from src.Card_Identification.path_manager import get_path
-# import src.Card_Identification.card_extraction.extract_card
-
 from src.Card_Identification.card_extraction import extract_card
-
-# # Add the project root directory to sys.path
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-from src.Card_Identification.path_manager import (
+from src.Card_Identification.path_manager import (PathType,
 get_path, return_folder_contents
 )
 
 
+
+class PathType():
+    BASE_DIR = Path(__file__).resolve().parent.parent.parent
+    RESULTS = str(BASE_DIR /'tests' / 'data' / 'Card_Identification' / 'results')
+    RAW_IMAGE = str(BASE_DIR /'tests' / 'data' / 'Card_Identification' / 'raw_IMGs')
+    PROCESSED_ROI = str(BASE_DIR / 'tests' /'data' / 'Card_Identification' / 'processed_ROIs')
+    FINAL_ROI = str(BASE_DIR /'tests' / 'data' / 'Card_Identification' / 'final_ROIs')
+    CONFIG = str(BASE_DIR /'tests' /  'data' /'Card_Identification' / 'config')
+
+
+
+@patch('src.Card_Identification.path_manager.PathType', PathType)    
 class TestIdentifyCard(unittest.TestCase):
     
-    BASE_DIR = Path(__file__).resolve().parent.parent.parent  # Adjust the parent calls as needed
-    TEST_IMG_STORAGE_PATH = str(BASE_DIR /'tests'/ 'data' / 'Card_Identification' / 'raw_IMGs')
+
+    def test_raw_image_contents(self):
+        # check if folder contains the right images
+        path_to_test_folder = get_path(PathType.RAW_IMAGE,verbose =0)
+        contents_test_folder = return_folder_contents(path_to_test_folder)
+        expected_contents = ['1.jpg', '2.jpg', '2023-12-24', '3.jpg', '4.jpg']
+        self.assertEqual(contents_test_folder, expected_contents)
+        
+    def test_identify_card_with_image_1(self):
+        # test with full filename
+        filename = "1.jpg"
+        # verbose 2
+        card,error  = extract_card(get_path(PathType.RAW_IMAGE,filename, verbose =0), 1)
+        if error != None:
+            print(error)
+        self.assertEqual(error, None)
    
-    
-    @patch('src.Card_Identification.path_manager.IMG_STORAGE_PATH', TEST_IMG_STORAGE_PATH)
-    def return_files_to_test(self):
-        folder_content = return_folder_contents(get_path("raw_image"))
-        return folder_content
+    def test_identify_card_with_image_2(self):
+        # test without .jpg
+        filename = "2"
+        # verbose 2
+        card,error  = extract_card(get_path(PathType.RAW_IMAGE,filename, verbose =0), 2)
+        if error != None:
+            print(error)
+        self.assertEqual(error, None)
         
-    @patch('src.Card_Identification.path_manager.IMG_STORAGE_PATH', TEST_IMG_STORAGE_PATH)
-    def test_identify_card_with_image1(self):
-      
+    def test_identify_card_without_imagepath(self):
+        # test if correct error when image is not found
+        filename = "Non found.jpg"
+        card,error  = extract_card(get_path(PathType.RAW_IMAGE,filename, verbose =0),2)
+        self.assertEqual(error, "Image not loaded. Check the image path")
         
-        files_to_test = self.return_files_to_test()
-        print(files_to_test)
-        for file in files_to_test:
-            
-            image_path = get_path("raw_image",file)
-            # Call the identify_card function with the image path
-            result = extract_card(image_path,2)
-            
-            # Perform assertions to validate the result
-            self.assertIsNotNone(result)  # Ensure the function returns a result
-   
         
+
 if __name__ == '__main__':
     unittest.main()
+
+         

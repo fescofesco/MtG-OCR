@@ -1,43 +1,61 @@
 {
   "phone_IMG_directory": null,
-  "scryfall_file_date": "2024-01-07 22:05:08",
+  "scryfall_file_date": "2023-12-20 10:05:15",
   "ui": [
     [
       [
-        0.12149532,
-        0.928333
+        0.067,
+        0.906
       ],
       [
-        0.2453,
-        0.973
+        0.4509,
+        0.97
       ]
     ]
   ],
   "exp": [
     [
       [
-        0.8137,
-        0.5616
+        0.82242,
+        0.6733333
       ],
       [
-        0.925,
-        0.6366
+        0.9135514,
+        0.723
+      ]
+    ],
+    [
+      [
+        0.7943,
+        0.56334
+      ],
+      [
+        0.9275,
+        0.62833
       ]
     ]
   ],
   "name": [
     [
       [
-        0.10983,
-        0.085
+        0.406542,
+        0.06
       ],
       [
-        0.9088,
-        0.135
+        0.63317,
+        0.13
+      ]
+    ],
+    [
+      [
+        0.707,
+        0.165
+      ],
+      [
+        0.1799,
+        0.06667
       ]
     ]
   ],
-  "Mtg_letters": [
-    "WdE&Su0\u00e261fF(4O\u00fctkJ\u00f6nZz\u00f1y\u00c9YICNla\\'_ \u00edcjh\u00e19\u00fa\u00e3HX\u0160M\u00e0s7Pp\u00f3\u00fb8v+:\u00e9beq3L-TiVwm?Qx\u00e4\\\"goGDU\u00aeA!K2/rB.),R"
-  ]
+  "Mtg_letters": "[\u00ae\u00e0\u00e3c\u0160\u00faezO_C\\\")0bI(+ri:?!aLHXkSGdxtN\u00e19\u00f1lwAqgM\u00e2PUno\u00fcjJs\u00e9WpZ&\u00e4Vh\u00f3v3-\u00f6Ey\u00ed.B4K\u00fb,8FRm1f6/Q\\'\u00c9DT2u Y7]"
 }

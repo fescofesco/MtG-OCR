@@ -9,8 +9,14 @@ To test the program either start the individual scripts or the tests stored in t
 # Setup 
 
 pip install -requirments
+
+```text
+  pip install -r requirements.txt
+  pip install pystessearct
+```
+
 install pystessearct and set it to path
-C:\Programm Files(x86)\Tesseract-OCR\
+`C:\Programm Files(x86)\Tesseract-OCR\'
 
 
 
@@ -20,7 +26,8 @@ C:\Programm Files(x86)\Tesseract-OCR\
 # 0) 
 
 Safe cards to 
-MtG-OCR\data\Card_Identification\raw_IMGs
+
+`~\git\MtG-OCR\data\Card_Identification\raw_IMGs` 
 
 and run main_Card_Identification in 
 

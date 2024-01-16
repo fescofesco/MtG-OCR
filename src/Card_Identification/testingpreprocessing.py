@@ -9,7 +9,6 @@ author: Felix Scope
 
 import pytesseract
 import cv2
-from configuration_handler import MtGOCRData
 from Levenshtein import distance as levenshtein_distance
 import os
 import re
@@ -18,6 +17,7 @@ import json
 import filecmp
 import numpy as np
 import imutils
+from src.Card_Identification.configuration_handler import MtGOCRData
 
 
 def display_image(name, image, width=600):

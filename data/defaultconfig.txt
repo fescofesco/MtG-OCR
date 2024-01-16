@@ -1,0 +1,16 @@
+      "phone_IMG_directory": None,
+            "scryfall_file_date": None,
+            "ui":[ 
+                [[0.067, 0.906], [0.4509, 0.97]]
+            ],
+            "exp": [
+              [[0.82242, 0.6733333], [0.9135514, 0.723]],
+              [[0.7943, 0.56334], [0.9275, 0.62833]]
+            ],
+            "name": 
+                [
+                [[0.406542, 0.06], [0.63317, 0.13]],
+                [[0.707, 0.165], [0.1799, 0.06667]],
+            ],
+            "Mtg_letters": ["WdE&Su0\u00e261fF(4O\u00fctkJ\u00f6nZz\u00f1y\u00c9YICNla\\'_ \u00edcjh\u00e19\u00fa\u00e3HX\u0160M\u00e0s7Pp\u00f3\u00fb8v+:\u00e9beq3L-TiVwm?Qx\u00e4\\\"goGDU\u00aeA!K2/rB.),R"]
+            }

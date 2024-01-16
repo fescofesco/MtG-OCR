@@ -1,0 +1,694 @@
+[
+{
+"set": "tsp",
+"max_collector_number": 301
+},
+{
+"set": "zen",
+"max_collector_number": 249
+},
+{
+"set": "xln",
+"max_collector_number": 279
+},
+{
+"set": "3ed",
+"max_collector_number": 306
+},
+{
+"set": "woe",
+"max_collector_number": 276
+},
+{
+"set": "eld",
+"max_collector_number": 269
+},
+{
+"set": "jmp",
+"max_collector_number": 495
+},
+{
+"set": "tmp",
+"max_collector_number": 350
+},
+{
+"set": "dmu",
+"max_collector_number": 281
+},
+{
+"set": "me4",
+"max_collector_number": 260
+},
+{
+"set": "pcy",
+"max_collector_number": 143
+},
+{
+"set": "mom",
+"max_collector_number": 291
+},
+{
+"set": "grn",
+"max_collector_number": 259
+},
+{
+"set": "cns",
+"max_collector_number": 210
+},
+{
+"set": "nph",
+"max_collector_number": 175
+},
+{
+"set": "gtc",
+"max_collector_number": 249
+},
+{
+"set": "tsr",
+"max_collector_number": 410
+},
+{
+"set": "dom",
+"max_collector_number": 269
+},
+{
+"set": "m19",
+"max_collector_number": 280
+},
+{
+"set": "vis",
+"max_collector_number": 167
+},
+{
+"set": "mb1",
+"max_collector_number": 1694
+},
+{
+"set": "ody",
+"max_collector_number": 350
+},
+{
+"set": "isd",
+"max_collector_number": 264
+},
+{
+"set": "mh2",
+"max_collector_number": 490
+},
+{
+"set": "arn",
+"max_collector_number": 78
+},
+{
+"set": "aer",
+"max_collector_number": 184
+},
+{
+"set": "mir",
+"max_collector_number": 350
+},
+{
+"set": "mbs",
+"max_collector_number": 155
+},
+{
+"set": "clb",
+"max_collector_number": 361
+},
+{
+"set": "dtk",
+"max_collector_number": 264
+},
+{
+"set": "fbb",
+"max_collector_number": 306
+},
+{
+"set": "ogw",
+"max_collector_number": 184
+},
+{
+"set": "9ed",
+"max_collector_number": 350
+},
+{
+"set": "mma",
+"max_collector_number": 229
+},
+{
+"set": "p02",
+"max_collector_number": 165
+},
+{
+"set": "vma",
+"max_collector_number": 325
+},
+{
+"set": "uds",
+"max_collector_number": 143
+},
+{
+"set": "ltr",
+"max_collector_number": 447
+},
+{
+"set": "2x2",
+"max_collector_number": 332
+},
+{
+"set": "7ed",
+"max_collector_number": 350
+},
+{
+"set": "rna",
+"max_collector_number": 259
+},
+{
+"set": "ema",
+"max_collector_number": 249
+},
+{
+"set": "ugl",
+"max_collector_number": 88
+},
+{
+"set": "me2",
+"max_collector_number": 245
+},
+{
+"set": "m13",
+"max_collector_number": 249
+},
+{
+"set": "dmr",
+"max_collector_number": 335
+},
+{
+"set": "mm3",
+"max_collector_number": 249
+},
+{
+"set": "unh",
+"max_collector_number": 141
+},
+{
+"set": "bfz",
+"max_collector_number": 274
+},
+{
+"set": "mm2",
+"max_collector_number": 249
+},
+{
+"set": "sok",
+"max_collector_number": 165
+},
+{
+"set": "5ed",
+"max_collector_number": 449
+},
+{
+"set": "lci",
+"max_collector_number": 402
+},
+{
+"set": "akh",
+"max_collector_number": 269
+},
+{
+"set": "inv",
+"max_collector_number": 350
+},
+{
+"set": "mh1",
+"max_collector_number": 254
+},
+{
+"set": "tsb",
+"max_collector_number": 121
+},
+{
+"set": "j22",
+"max_collector_number": 834
+},
+{
+"set": "snc",
+"max_collector_number": 281
+},
+{
+"set": "nem",
+"max_collector_number": 143
+},
+{
+"set": "neo",
+"max_collector_number": 302
+},
+{
+"set": "por",
+"max_collector_number": 215
+},
+{
+"set": "cmm",
+"max_collector_number": 451
+},
+{
+"set": "bok",
+"max_collector_number": 165
+},
+{
+"set": "hou",
+"max_collector_number": 199
+},
+{
+"set": "2ed",
+"max_collector_number": 302
+},
+{
+"set": "ktk",
+"max_collector_number": 269
+},
+{
+"set": "stx",
+"max_collector_number": 375
+},
+{
+"set": "8ed",
+"max_collector_number": 350
+},
+{
+"set": "leb",
+"max_collector_number": 302
+},
+{
+"set": "mmq",
+"max_collector_number": 350
+},
+{
+"set": "akr",
+"max_collector_number": 338
+},
+{
+"set": "con",
+"max_collector_number": 145
+},
+{
+"set": "roe",
+"max_collector_number": 248
+},
+{
+"set": "cn2",
+"max_collector_number": 222
+},
+{
+"set": "frf",
+"max_collector_number": 185
+},
+{
+"set": "csp",
+"max_collector_number": 155
+},
+{
+"set": "znr",
+"max_collector_number": 384
+},
+{
+"set": "ori",
+"max_collector_number": 272
+},
+{
+"set": "fut",
+"max_collector_number": 180
+},
+{
+"set": "dbl",
+"max_collector_number": 534
+},
+{
+"set": "jud",
+"max_collector_number": 143
+},
+{
+"set": "4ed",
+"max_collector_number": 378
+},
+{
+"set": "cmr",
+"max_collector_number": 361
+},
+{
+"set": "eve",
+"max_collector_number": 180
+},
+{
+"set": "iko",
+"max_collector_number": 274
+},
+{
+"set": "ptk",
+"max_collector_number": 180
+},
+{
+"set": "j21",
+"max_collector_number": 776
+},
+{
+"set": "hbg",
+"max_collector_number": 308
+},
+{
+"set": "10e",
+"max_collector_number": 383
+},
+{
+"set": "bro",
+"max_collector_number": 287
+},
+{
+"set": "kld",
+"max_collector_number": 264
+},
+{
+"set": "rav",
+"max_collector_number": 306
+},
+{
+"set": "ice",
+"max_collector_number": 383
+},
+{
+"set": "sum",
+"max_collector_number": 306
+},
+{
+"set": "war",
+"max_collector_number": 264
+},
+{
+"set": "rvr",
+"max_collector_number": 404
+},
+{
+"set": "rix",
+"max_collector_number": 196
+},
+{
+"set": "all",
+"max_collector_number": 144
+},
+{
+"set": "gpt",
+"max_collector_number": 165
+},
+{
+"set": "2xm",
+"max_collector_number": 332
+},
+{
+"set": "m14",
+"max_collector_number": 249
+},
+{
+"set": "dst",
+"max_collector_number": 165
+},
+{
+"set": "som",
+"max_collector_number": 249
+},
+{
+"set": "6ed",
+"max_collector_number": 350
+},
+{
+"set": "dis",
+"max_collector_number": 180
+},
+{
+"set": "m12",
+"max_collector_number": 249
+},
+{
+"set": "m11",
+"max_collector_number": 249
+},
+{
+"set": "arb",
+"max_collector_number": 145
+},
+{
+"set": "klr",
+"max_collector_number": 301
+},
+{
+"set": "chk",
+"max_collector_number": 306
+},
+{
+"set": "hml",
+"max_collector_number": 115
+},
+{
+"set": "m20",
+"max_collector_number": 280
+},
+{
+"set": "mrd",
+"max_collector_number": 306
+},
+{
+"set": "rin",
+"max_collector_number": 186
+},
+{
+"set": "ust",
+"max_collector_number": 216
+},
+{
+"set": "5dn",
+"max_collector_number": 165
+},
+{
+"set": "ima",
+"max_collector_number": 249
+},
+{
+"set": "uma",
+"max_collector_number": 254
+},
+{
+"set": "mor",
+"max_collector_number": 150
+},
+{
+"set": "me1",
+"max_collector_number": 195
+},
+{
+"set": "soi",
+"max_collector_number": 297
+},
+{
+"set": "ths",
+"max_collector_number": 249
+},
+{
+"set": "usg",
+"max_collector_number": 350
+},
+{
+"set": "m15",
+"max_collector_number": 269
+},
+{
+"set": "exp",
+"max_collector_number": 45
+},
+{
+"set": "rtr",
+"max_collector_number": 274
+},
+{
+"set": "sth",
+"max_collector_number": 143
+},
+{
+"set": "tor",
+"max_collector_number": 143
+},
+{
+"set": "thb",
+"max_collector_number": 254
+},
+{
+"set": "chr",
+"max_collector_number": 113
+},
+{
+"set": "one",
+"max_collector_number": 271
+},
+{
+"set": "bng",
+"max_collector_number": 165
+},
+{
+"set": "m21",
+"max_collector_number": 277
+},
+{
+"set": "dka",
+"max_collector_number": 158
+},
+{
+"set": "tpr",
+"max_collector_number": 269
+},
+{
+"set": "mat",
+"max_collector_number": 50
+},
+{
+"set": "scg",
+"max_collector_number": 143
+},
+{
+"set": "unf",
+"max_collector_number": 244
+},
+{
+"set": "wth",
+"max_collector_number": 167
+},
+{
+"set": "ren",
+"max_collector_number": 189
+},
+{
+"set": "mps",
+"max_collector_number": 54
+},
+{
+"set": "apc",
+"max_collector_number": 143
+},
+{
+"set": "wwk",
+"max_collector_number": 145
+},
+{
+"set": "pls",
+"max_collector_number": 143
+},
+{
+"set": "ala",
+"max_collector_number": 249
+},
+{
+"set": "ulg",
+"max_collector_number": 143
+},
+{
+"set": "avr",
+"max_collector_number": 244
+},
+{
+"set": "emn",
+"max_collector_number": 205
+},
+{
+"set": "shm",
+"max_collector_number": 301
+},
+{
+"set": "dgm",
+"max_collector_number": 156
+},
+{
+"set": "exo",
+"max_collector_number": 143
+},
+{
+"set": "mp2",
+"max_collector_number": 54
+},
+{
+"set": "a25",
+"max_collector_number": 249
+},
+{
+"set": "plc",
+"max_collector_number": 165
+},
+{
+"set": "afr",
+"max_collector_number": 281
+},
+{
+"set": "s99",
+"max_collector_number": 173
+},
+{
+"set": "vow",
+"max_collector_number": 402
+},
+{
+"set": "khm",
+"max_collector_number": 285
+},
+{
+"set": "m10",
+"max_collector_number": 249
+},
+{
+"set": "leg",
+"max_collector_number": 310
+},
+{
+"set": "lea",
+"max_collector_number": 295
+},
+{
+"set": "ons",
+"max_collector_number": 350
+},
+{
+"set": "bbd",
+"max_collector_number": 256
+},
+{
+"set": "mid",
+"max_collector_number": 277
+},
+{
+"set": "jou",
+"max_collector_number": 165
+},
+{
+"set": "lrw",
+"max_collector_number": 301
+},
+{
+"set": "pip",
+"max_collector_number": 326
+},
+{
+"set": "lgn",
+"max_collector_number": 145
+},
+{
+"set": "atq",
+"max_collector_number": 81
+},
+{
+"set": "me3",
+"max_collector_number": 230
+},
+{
+"set": "fem",
+"max_collector_number": 102
+},
+{
+"set": "drk",
+"max_collector_number": 119
+}
+]

@@ -9,7 +9,7 @@ author: Felix Scope
 
 
 # from itertools import prod0
-from configuration_handler import MtGOCRData, CubeCobraData
+from src.Card_Identification.configuration_handler import MtGOCRData, CubeCobraData
 from Levenshtein import distance as levenshtein_distance
 
 mtg_ocr_config = MtGOCRData()

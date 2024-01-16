@@ -18,7 +18,8 @@ import re
 import requests
 from datetime import datetime, timedelta
 import cv2
-from src.Card_Identification.path_manager  import (get_path, return_folder_contents)
+from src.Card_Identification.path_manager import (
+    get_path, return_folder_contents, PathType)
 
 
 class ConfigHandler:
@@ -53,9 +54,6 @@ parent of
         value = simpledialog.askstring("Input", f"Add value for {parameter}")
         root.destroy()
         return value
-    
-    def check_file_existence(self, filename):
-        return os.path.isfile(filename)
     
 
 class MtGOCRData(ConfigHandler):
@@ -121,7 +119,8 @@ The default values are defining two edges of a rectanlge of the card snippet
       edge between artwork and text.
       
       default value:
-      [
+      None but then set to 
+          [
     [[0.8137, 0.5616], [0.925, 0.6366]]
     ],
       
@@ -145,7 +144,7 @@ The default values are defining two edges of a rectanlge of the card snippet
     
         """
         super().__init__(parameters_file)
-        if not os.path.exists(get_path('config',self.parameters_file)):
+        if not os.path.exists(get_path(PathType.CONFIG,self.parameters_file)):
             self.create_default_config()
 
         # self.setup_parameters_file()
@@ -155,27 +154,64 @@ The default values are defining two edges of a rectanlge of the card snippet
      
     def create_default_config(self): 
         default_config = {
-            "phone_IMG_directory": None,
-            "scryfall_file_date": None,
-            "ui":[ 
-                [[0.12149532, 0.928333], [0.2453, 0.973]]],
-            "exp": [
-              [[0.8137, 0.5616], [0.925, 0.6366]]
-            ],
-            "name": [
-              [[0.10983, 0.085], [0.9088, 0.135]]
-            ],
-            "Mtg_letters": ["WdE&Su0\u00e261fF(4O\u00fctkJ\u00f6nZz\u00f1y\u00c9YICNla\\'_ \u00edcjh\u00e19\u00fa\u00e3HX\u0160M\u00e0s7Pp\u00f3\u00fb8v+:\u00e9beq3L-TiVwm?Qx\u00e4\\\"goGDU\u00aeA!K2/rB.),R"]
-            }
-
-        # No need to save twice here right?
+        "phone_IMG_directory": None,
+        "scryfall_file_date": "2024-01-11 22:05:17",
+        "ui":[ 
+            [
+                [
+                    0.067, 0.906
+                ], 
+                [
+                    0.4509, 0.97
+                    ]
+                ]
+           ],
+        "exp": [
+             [
+                 [
+                     0.82242, 0.6733333
+                     ],
+                 [
+                     0.9135514, 0.723
+                     ]
+                 ],
+             [
+                 [
+                     0.7943, 0.56334
+                     ],
+                 [
+                     0.9275, 0.62833
+                     ]
+                 ]
+           ],
+        "name": [
+            [
+                [
+                    0.406542, 0.06
+                    ],
+                [
+                    0.63317, 0.13
+                    ]
+                ],
+            [
+                [
+                    0.707, 0.165
+                    ],
+                [
+                    0.1799,
+                    0.06667
+                    ]
+                ]
+           ],
+          "Mtg_letters": "[\u00ae\u00e0\u00e3c\u0160\u00faezO_C\\\")0bI(+ri:?!aLHXkSGdxtN\u00e19\u00f1lwAqgM\u00e2PUno\u00fcjJs\u00e9WpZ&\u00e4Vh\u00f3v3-\u00f6Ey\u00ed.B4K\u00fb,8FRm1f6/Q\\'\u00c9DT2u Y7]"
+        }  
         self.parameters_config = default_config      
         self.save_config()
-        
+              
         
     def load_parameters_config(self):
-        if os.path.exists(get_path('config',self.parameters_file)):
-            with open(get_path('config',self.parameters_file), "r") as f:
+        if os.path.exists(get_path(PathType.CONFIG,self.parameters_file)):
+            with open(get_path(PathType.CONFIG, self.parameters_file), "r") as f:
                 file_content = f.read()
                 # Add this line for debugging
                 # print("File content:", repr(file_content))  
@@ -188,7 +224,7 @@ The default values are defining two edges of a rectanlge of the card snippet
             self.create_default_config()
              
     def update_Mtg_letters(self,verbose = 0):         
-        
+        """ updates all used letters from MtG cards from scryfall file"""
         scryfall_data = self.open_scryfall_file()
         # Assuming 'scryfall_data' contains the list of dicts with 'name' key for card names
         card_names = [card['name'] for card in scryfall_data]
@@ -216,7 +252,7 @@ The default values are defining two edges of a rectanlge of the card snippet
     
   
     def get_Mtg_letters(self):
-        
+        """ returns all letters used my MtG cards"""
         # When displayed in utf-8 encoded format, it  represent characters 
         # that might not be readily visible or easily typable.
         # To work with these special characters represented as Unicode escape 
@@ -234,6 +270,7 @@ The default values are defining two edges of a rectanlge of the card snippet
         return value
 
     def check_scryfall_date(self):       
+        """ returns the scryfall date, if too old, new file is donwloaded"""
         # Get the latest scryfall file
         latest_scryfall_file = self.get_latest_scryfall_file()
        
@@ -257,7 +294,7 @@ The default values are defining two edges of a rectanlge of the card snippet
                  
   
     def save_config(self):
-        with open(get_path('config',self.parameters_file), "w") as f:
+        with open(get_path(PathType.CONFIG,self.parameters_file), "w") as f:
             json.dump(self.parameters_config, f, indent=2)
             
 
@@ -282,7 +319,7 @@ The default values are defining two edges of a rectanlge of the card snippet
         self.save_config()
 
     def save_coordinates(self, mode, coordinates):
-        with open(get_path('config','parameters.txt'), 'r') as file:
+        with open(get_path(PathType.CONFIG, 'parameters.txt'), 'r') as file:
             data = json.load(file)
 
         if mode not in data:
@@ -290,7 +327,7 @@ The default values are defining two edges of a rectanlge of the card snippet
 
         data[mode].append(coordinates)  # Append the new coordinates to the list
 
-        with open(get_path('config','parameters.txt'), 'w') as file:
+        with open(get_path(PathType.CONFIG, 'parameters.txt'), 'w') as file:
             json.dump(data, file, indent=2)  # Save the updated data back to the file
 
         
@@ -348,7 +385,7 @@ The default values are defining two edges of a rectanlge of the card snippet
             cv2.imshow(param['window_name'], img_copy)
     
     
-    def set_relative_coordinates(self, image, window_name='UI identifier, q to quit. Click coner points of UI, exp symbol or name and press enter after each selsection',
+    def set_relative_coordinates(self, image, window_name= None,
                                  verbose =0, max_width=800, max_height=600):
         """
         this function help setting the coordinates for ui (unique identifier), name
@@ -385,6 +422,11 @@ The default values are defining two edges of a rectanlge of the card snippet
         None.
     
         """
+        if window_name is None:
+            window_name = 'UI identifier, q to quit. Click coner points of UI,\
+                exp symbol or name and press enter after each selsection to \
+                    save coordinates'
+        
         height, width, _ = image.shape
         scale = min(max_width / width, max_height / height)
         new_width = int(width * scale)
@@ -404,9 +446,12 @@ The default values are defining two edges of a rectanlge of the card snippet
     
         while True:
             key = cv2.waitKey(1) & 0xFF
-            if key == ord('q') or key == ord('Q') or key == 27: #key 27 = ESC
+            if key == ord('q') or key == ord('Q') or key == 27: #key 27 = ESC#:
+                cv2.destroyWindow(window_name)
                 break
-            elif key == 13:  # Check for 'Enter' key press
+            elif cv2.getWindowProperty(window_name, cv2.WND_PROP_VISIBLE) < 1:
+                break
+            elif key == 13 :  # Check for 'Enter' key press or window closure
                 points = tuple(param['clicked_points'])
                 if len(points) == 2:
                     relative_coordinates = [
@@ -426,10 +471,7 @@ The default values are defining two edges of a rectanlge of the card snippet
                     cv2.imshow(window_name, resized_image)
                     cv2.setMouseCallback(window_name, self.click_event, param)
                     
-              
-        cv2.destroyWindow(window_name)
-        
-    
+
     
     def determine_mode(self,y_coordinate):
         """
@@ -483,7 +525,7 @@ The default values are defining two edges of a rectanlge of the card snippet
         """
         filename = 'parameters.txt'
     
-        with open(get_path("config",filename), 'r') as file:
+        with open(get_path(PathType.CONFIG, filename), 'r') as file:
             data = json.load(file)
        
         if verbose > 0: print(data)
@@ -499,7 +541,7 @@ The default values are defining two edges of a rectanlge of the card snippet
 
 
     def get_latest_scryfall_file(self):
-        files = [f for f in return_folder_contents(get_path("config")) if f.endswith('.json') and 
+        files = [f for f in return_folder_contents(get_path(PathType.CONFIG)) if f.endswith('.json') and 
                  re.match(r'default-cards-\d{14}', f)]
         if not files:
             return None
@@ -512,10 +554,10 @@ The default values are defining two edges of a rectanlge of the card snippet
     # number
     def get_set_list(self, verbose = 0):
         filename = "all_sets.json"
-        if not os.path.exists(get_path('config',filename)):
+        if not os.path.exists(get_path(PathType.CONFIG ,filename)):
             self.update_set_list(self.open_scryfall_file())
                   
-        with open(get_path('config',filename), 'r', encoding='utf-8') as file:
+        with open(get_path(PathType.CONFIG, filename), 'r', encoding='utf-8') as file:
             all_sets = json.load(file)
             
         if verbose >0:
@@ -559,11 +601,11 @@ The default values are defining two edges of a rectanlge of the card snippet
         result_list = [{'set': set_name, 'max_collector_number': max_num} for set_name, max_num in three_letter_sets.items()]
 
         # Write the result list to a JSON file
-        with open(get_path('config','all_sets.json'), 'w') as f:
+        with open(get_path(PathType.CONFIG, 'all_sets.json'), 'w') as f:
             json.dump(result_list, f, indent=0)
 
     def open_scryfall_file(self, verbose=0):
-        files_in_directory = return_folder_contents(get_path("config"))
+        files_in_directory = return_folder_contents(get_path(PathType.CONFIG))
         if verbose > 0: print(files_in_directory)
         # Search for a file with a filename that starts with "default-cards" and ends with ".json"
         for filename in files_in_directory:
@@ -571,7 +613,7 @@ The default values are defining two edges of a rectanlge of the card snippet
                 if verbose >0:
                     print("opening:", filename)
                 # Open and read the JSON file
-                with open(get_path("config",filename), 'r', encoding='utf-8') as file:
+                with open(get_path(PathType.CONFIG, filename), 'r', encoding='utf-8') as file:
                 
                     scryfall_file = json.load(file)
           
@@ -579,7 +621,7 @@ The default values are defining two edges of a rectanlge of the card snippet
     
     def delete_old_scryfall_files(verbose=0):
         # Get all files in the directory
-        files_in_directory = get_path("config")
+        files_in_directory = get_path(PathType.CONFIG)
     
         # Filter files that start with "default-cards" and end with ".json"
         relevant_files = [filename for filename in files_in_directory if filename.startswith("default-cards") and filename.endswith(".json")]
@@ -640,12 +682,12 @@ The default values are defining two edges of a rectanlge of the card snippet
            if download_successful:
                # Check if the file already exists in your working directory
                filename = os.path.basename(download_link)
-               if not os.path.exists(get_path('config',filename)):
+               if not os.path.exists(get_path(PathType.CONFIG,filename)):
                    # Download the file
                    response = requests.get(download_link)
         
                    if response.status_code == 200:
-                       with open(get_path("config",filename), 'wb') as file:
+                       with open(get_path(PathType.CONFIG,filename), 'wb') as file:
                            file.write(response.content)
         
                        print(f"Downloaded {filename}")
@@ -663,7 +705,7 @@ The default values are defining two edges of a rectanlge of the card snippet
                        file.close()
         
                        # List files in the current directory
-                       files_in_directory = get_path("config")
+                       files_in_directory = return_folder_contents(get_path(PathType.CONFIG))
 
                        print("files_in_directory: ", files_in_directory)
                        # Delete files with a specific extension or criteria
@@ -694,26 +736,29 @@ The default values are defining two edges of a rectanlge of the card snippet
 class CubeCobraData(ConfigHandler):
     def __init__(self, cubecobra_file="cubecobralogin.txt"):
         super().__init__()
+  
         self.cubecobra_file = cubecobra_file
-        if not os.path.exists(get_path('config',self.cubecobra_file)):
+        
+        if not os.path.exists(get_path(PathType.CONFIG,self.cubecobra_file)):
+            
             self.create_default_cubecobra_config()
         self.load_cubecobra_config()
 
     def create_default_cubecobra_config(self):
         default_cubecobra_config = {
-            "cube_url": None,
-            "cube_username": None,
-            "cube_password": None
+            "cube_url": 123,
+            "cube_username": "username",
+            "cube_password": "password"
         }
 
-        with open(get_path('config', self.cubecobra_file), "w") as f:
+        with open(get_path(PathType.CONFIG, self.cubecobra_file), "w") as f:
             json.dump(default_cubecobra_config, f, indent=2)
            
     def load_cubecobra_config(self):
-        if os.path.exists(get_path('config',self.cubecobra_file)):
-            with open(get_path('config',self.cubecobra_file), "r") as f:
+        if os.path.exists(get_path(PathType.CONFIG,self.cubecobra_file)):
+            with open(get_path(PathType.CONFIG,self.cubecobra_file), "r") as f:
                 file_content = f.read()
-                print("File content:", repr(file_content))  # Add this line for debugging
+                # print("File content:", repr(file_content))  # Add this line for debugging
                 try:
                     self.cubecobra_config_data = json.loads(file_content)
                 except json.JSONDecodeError as e:
@@ -723,7 +768,7 @@ class CubeCobraData(ConfigHandler):
             self.cubecobra_config_data = {}
 
     def save_cubecobra_config(self):
-        with open(get_path("config",self.cubecobra_file), "w") as f:
+        with open(get_path(PathType.CONFIG,self.cubecobra_file), "w") as f:
             json.dump(self.cubecobra_config_data, f, indent=2)
 
     def get_cube_url(self):
@@ -781,7 +826,7 @@ if __name__ == "__main__":
     filename = "IMG_20231222_111834.jpg"   
   
     
-    image =cv2.imread(get_path("raw_image", filename))   
+    image =cv2.imread(get_path(PathType.RAW_IMAGE, filename))   
     mtg_ocr_config.set_relative_coordinates(image)
     
 
@@ -793,9 +838,16 @@ if __name__ == "__main__":
     CubeData.set_cube_url()
     # print(CubeData.get_cube_url())
     CubeData.set_cube_username("chrilix")
+    print(CubeData.get_cube_username())
+
     CubeData.set_cube_password()
+    print(CubeData.get_cube_password())
+
     # print(mtg_ocr_data.get_img_storage_directory())
     # mtg_ocr_data.set_phone_directory()
 
     print(CubeData.get_cube_url())
     
+    print(mtg_ocr_config.get_coordinates_from_file("ui"))
+    print(mtg_ocr_config.get_coordinates_from_file("exp"))
+    print(mtg_ocr_config.get_coordinates_from_file("name"))
