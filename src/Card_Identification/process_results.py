@@ -16,10 +16,25 @@ mtg_ocr_config = MtGOCRData()
 scryfall_all_data= mtg_ocr_config.open_scryfall_file()
 
 
+from fuzzywuzzy import fuzz
+
+def fuzzy_match(potential_name, actual_name):
+    ratio = fuzz.ratio(potential_name, actual_name)
+    if ratio >= 75:
+        return True
+    return False
+
+for card in scryfall_all_data:
+    if fuzzy_match(pot_name, card['name']) and pot_collector_number == card['collector_number'] and pot_set == card['set_name'] and pot_rarity == card['rarity']:
+        # Found a matching card!
+        print(card['name'])
+        print(card['set_name'])
+        print(card['collector_number'])
+        print(card['rarity'])
+        break
 
 
-
-pot_names = ['Visage of Dread ', 'Dread']
+pot_names = ['Visage of Dread']
 pot_collector_numbers = ["123", "456"]  # Add actual collector numbers
 pot_sets = ["res", "Nwi", "LCE", "weS"]
 pot_sets = ['res', 'Nwi', 'LCE', 'weS']
@@ -45,6 +60,8 @@ def find_card_by_infos(pot_collector_numbers, pot_sets, pot_rarities, pot_cardna
             name_distance = levenshtein_distance(name.lower(), card["name"].lower())
             if name_distance <= 2:
                 possible_cards.append(card)
+    
+    print("possible cards:", possible_cards)
    
    # # filter by collector number an set, but this is not needed now as it extends the data very much 
    # for pot_collector_number in pot_collector_numbers:

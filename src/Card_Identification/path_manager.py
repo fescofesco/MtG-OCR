@@ -62,7 +62,7 @@ MtG-OCR
 import os
 from pathlib import Path
 from enum import Enum
-
+import cv2
 
 
 class PathType(Enum):
@@ -151,6 +151,25 @@ def return_folder_contents(path_to_folder : str):
 
     return contents
 
+def return_folder_image_contents(path_to_folder: str):
+    """
+    Returns a list of all image files that OpenCV can read in the folder.
+    """
+    # Get the list of all items in the folder
+    all_items = os.listdir(path_to_folder)
+
+    # Filter out only image files that OpenCV can read
+    image_files = [
+        item for item in all_items
+        if (
+            any(item.lower().endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff'])
+            and os.path.isfile(os.path.join(path_to_folder, item))
+            and cv2.imread(os.path.join(path_to_folder, item)) is not None
+        )
+    ]
+
+    return image_files
+
 
 if __name__ == "__main__":
     
@@ -159,3 +178,4 @@ if __name__ == "__main__":
     print(return_folder_contents(get_path(PathType.CONFIG)))
     print(return_folder_contents(get_path(PathType.PROCESSED_ROI)))
     print(return_folder_contents(get_path(PathType.FINAL_ROI)))
+    print(return_folder_image_contents(get_path(PathType.RAW_IMAGE)))

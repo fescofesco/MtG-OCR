@@ -14,6 +14,8 @@ import time
 import os
 from pathlib import Path
 import json
+import sys
+
 
 from src.Card_Identification.img_from_adb import transfer_images_from_device
 from src.Card_Identification.card_extraction import extract_card
@@ -21,129 +23,227 @@ from src.Card_Identification.process_card import (create_rois_from_filename)
 from src.Card_Identification.process_rois import (return_cardname_from_ROI, display_cardname, delete_duplicate_ROIs)
 from src.Card_Identification.configuration_handler import MtGOCRData
 from src.Card_Identification.path_manager import (get_path, PathType)
+from src.Card_Identification.save_results import (write_results_to_file)
+from src.Card_Identification.copy_img_to_data import (select_and_copy_images_to_data)
 
 
-def process_files(directory, timeout=2):
-    if not os.path.isabs(directory):
-        full_path = os.path.join("ImgStorage", directory)
-    else:
-        full_path = directory
-        
-    processed_files = set()
-    start_time = time.time()
-
-    while True:
-        files = os.listdir(full_path)
-        jpg_files = [file for file in files if file.endswith('.jpg')]
-
-        for jpg_file in jpg_files:
-            if jpg_file not in processed_files:
-                processed_files.add(jpg_file)
-                yield os.path.join(directory, jpg_file)
-
-        elapsed_time = time.time() - start_time
-        if elapsed_time > timeout:
-            raise StopIteration
 
 
-def get_newest_image(directory):
+def save_infos(filename, cardname):
+    print(f"Save infos for {filename} in identified_DATETIME.txt")
+    cardnames.append([filename,cardname[0],])
+
+def save_infos_foil(filename, cardname):
+    print(f"Save infos for {filename} with finish foil in identified_DATETIME.txt")
+
+def save_proxied(filename, cardname):
+    print(f"Save infos for {filename} with status Proxied")
+
+def move_to_unidentified(filename, cardname):
+    print(f"Move {filename} to undidentified_DATETIME.txt")
+
+def scrap_image(filename, cardname):
+    print(f"Scrap image for {filename}. {filename} will NOT be moved to undidentified_DATETIME.txt")
+
+def define_rois(filename, cardname):
+    print(f"Define ROIs for {filename} and start anew")
+
+def exit_program(filename, cardname):
+    print("Exiting the program.")
+    sys.exit()
+
+def user_cardname_confirmation(filename, cardname, default_action=None):
     """
-    returns the name of the newest image by file name change date of the specified
-    directory
+    Displays a user confirmation dialog and returns the selected action.
+    """
+    valid_choices = ['Y','F', 'P', 'N', 'S', 'R', 'X']
+
+
+    if default_action:
+        # If a default action is provided, execute it and return
+        default_action(filename, cardname)
+        return
+    
+    while True:
+        print(f"The file {filename} was identified as {cardname[0]['name']} ccn {cardname[0]['collector_number']} from {cardname[0]['set']}. Is this correct?")
+        print("[Y]es - save infos in identified_DATETIME.txt")
+        print("[F] yes and save it with finish foil identified_DATETIME.txt")
+        print("[P] yes and save it with status:Proxied")
+        print("[N]o - move filename to undidentified_DATETIME.txt")
+        print("[S] No and scrap image, filename will NOT be moved to undidentified_DATETIME.txt")
+        print("[R]ois - define the rois again and start anew")
+        print("[X] exit program")
+
+        # Get user input
+        choice = input("Enter your choice: ").upper()
+
+        if choice in valid_choices:
+            break
+        else:
+            print("Invalid choice. Please enter a valid option.")
+
+    # Define actions based on user choices
+    actions = {
+        'Y': save_infos,
+        'F': save_infos_foil,
+        'P': save_proxied,
+        'N': move_to_unidentified,
+        'S': scrap_image,
+        'R': define_rois,
+        'X': exit_program
+    }
+
+    # Perform the selected action
+    actions[choice](filename, cardname)
+    
+
+def main_Card_Identification(mode:str = None):
+    """
 
     Parameters
     ----------
-    directory : STR
-        relative or absolute directory where the function searches.
+    mode : str, optional
+    
+        quickstart: A file dialog asks the user to select a folder 
+        adb:
+        all_files:
+        
+        DESCRIPTION. The default is None.
 
     Returns
     -------
-    cv2 image
-        returns the latest card from the folder
+    cardnames : TYPE
+        DESCRIPTION.
 
     """
-    if not os.path.isabs(directory):
-        directory = os.path.join(os.getcwd(), directory)  # Join with current working directory if not absolute
-
-    image_files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f)) and f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
-
-    if not image_files:
-        return None  # No image files found
-
-    # Sort files by name to get the one with the highest timestamp
-    image_files.sort(reverse=True)
-
-    newest_image = os.path.join(directory, image_files[0])  # Return absolute path to the newest image
-    return newest_image
-
-def write_results_to_file(card_names, name=None, location=None):
-    if name is None:
-        name = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")  # Use current date and time as default name
     
-    if not name.endswith(".txt"):
-        name = name + '.txt'
-    if location is None:
-        location = get_path(PathType.RESULTS)  # Use the default results path
-    
-    path = os.path.join(location, name)  # Combine location and name using os.path.join()
+    if mode is None:
+        mode = "quickstart"
 
-    # Check if the directory exists and create it if it doesn't
-    if not os.path.exists(location):
-        os.makedirs(location)
+    if mode == "quickstart":
+        select_and_copy_images_to_data()
+        all_images = return_folder_image_contents(get_path(PathType.RAW_IMAGE))
+    elif mode == "adb":
+        pass
+    elif mode == "all_files":
+        pass
         
-    with open(path, "w") as f:
-        json.dump(card_names, f, indent=2)
+    # main_Card_Identification()
+    print("Main Func Of main_MtG-Card_Identification")
+   
+    verbose = 0
+    # Create a generator for processing unprocessed files
+   
+    mtg_ocr_config = MtGOCRData()
+    scryfall_all_data = mtg_ocr_config.open_scryfall_file()
+    cardnames = []
+    cardsnotidentified = []
+    # Define the mode of file aquisition
+
+    for filename in all_images:
+    
+
+        path = get_path(PathType.RAW_IMAGE,filename)
+   
+        card, error = extract_card(path ,verbose)
+        if error: 
+            print(error)
+            cardsnotidentified.append(filename)
+        
+        
+        if error is None:
+            print(path)
+            filename = os.path.basename(path)
+            print(filename)
+            create_rois_from_filename(filename, mtg_ocr_config, card, verbose)
+            cardname = return_cardname_from_ROI(filename, scryfall_all_data, verbose)
+            display_cardname(cardname)
+
+        
+            if cardname is not None:
+                user_cardname_confirmation(filename,cardname)
+        else:
+            continue
+       
 
 
-def main_Card_Identification():
-   # main_Card_Identification()
-   print("Main Func Of main_MtG-Card_Identification")
+# def main_Card_Identification(mode:str = None):
+#     """
+
+#     Parameters
+#     ----------
+#     mode : str, optional
+    
+#         quickstart: A file dialog asks the user to select a folder 
+#         adb:
+#         all_files:
+        
+#         DESCRIPTION. The default is None.
+
+#     Returns
+#     -------
+#     cardnames : TYPE
+#         DESCRIPTION.
+
+#     """
+    
+#     if mode is None:
+#         mode = "quickstart"
+
+#     if mode == "quickstart":
+#         select_and_copy_images_to_data()
+#     elif mode == "adb":
+#         pass
+#     elif mode == "all_files":
+        
+#    # main_Card_Identification()
+#    print("Main Func Of main_MtG-Card_Identification")
    
-   verbose = 0
-   # Create a generator for processing unprocessed files
-   file_generator = process_files(get_path(PathType.RAW_IMAGE))
-   timeout = 10
-   start_time = time.time()
-   mtg_ocr_config = MtGOCRData()
-   scryfall_all_data = mtg_ocr_config.open_scryfall_file()
-   cardnames = []
-   # Define the mode of file aquisition
-   while True:
-       try:
-           unprocessed_file = next(file_generator)
-           path = get_path(PathType.RAW_IMAGE,unprocessed_file)
+#    verbose = 0
+#    # Create a generator for processing unprocessed files
+#    file_generator = process_files(get_path(PathType.RAW_IMAGE))
+#    timeout = 10
+#    start_time = time.time()
+#    mtg_ocr_config = MtGOCRData()
+#    scryfall_all_data = mtg_ocr_config.open_scryfall_file()
+#    cardnames = []
+#    # Define the mode of file aquisition
+#    while True:
+#        try:
+#            unprocessed_file = next(file_generator)
+#            path = get_path(PathType.RAW_IMAGE,unprocessed_file)
    
-           card, error = extract_card(path ,verbose)
-           if error: print(error)
+#            card, error = extract_card(path ,verbose)
+#            if error: print(error)
            
-           if error is None:
-               print(path)
-               filename = os.path.basename(path)
-               print(filename)
-               create_rois_from_filename(filename, mtg_ocr_config, card, verbose)
-               delete_duplicate_ROIs(filename,verbose)
-               cardname = return_cardname_from_ROI(filename, scryfall_all_data, verbose)
-               display_cardname(cardname)
+#            if error is None:
+#                print(path)
+#                filename = os.path.basename(path)
+#                print(filename)
+#                create_rois_from_filename(filename, mtg_ocr_config, card, verbose)
+#                delete_duplicate_ROIs(filename,verbose)
+#                cardname = return_cardname_from_ROI(filename, scryfall_all_data, verbose)
+#                display_cardname(cardname)
 
-               if cardname is not None:
-                    cardnames.append([filename,cardname[0],])
-           else:
-               continue
+#                if cardname is not None:
+#                     cardnames.append([filename,cardname[0],])
+#            else:
+#                continue
            
             
-       except RuntimeError:
-           print("No new files found, exiting program")
-           return cardnames
-           break
+#        except RuntimeError:
+#            print("No new files found, exiting program")
+#            return cardnames
+#            break
        
-       except StopIteration:
-           print("StopIteration new files found, exiting program")
-           return cardnames
-           break
-       except KeyboardInterrupt:
-           print("User Termination")
-           return cardnames
-           break
+#        except StopIteration:
+#            print("StopIteration new files found, exiting program")
+#            return cardnames
+#            break
+#        except KeyboardInterrupt:
+#            print("User Termination")
+#            return cardnames
+#            break
 
 if __name__ == "__main__":
 
