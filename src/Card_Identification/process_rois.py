@@ -515,7 +515,7 @@ def find_cardname_byname(pot_cardnameS, scryfall_all_data, verbose = 1):
     """
     closest_matches = []
     
-    if verbose >0: print("potential cardnames:", pot_cardnameS)
+    if verbose >2: print("potential cardnames:", pot_cardnameS)
     
     for potential_name in pot_cardnameS:
         print(potential_name)
@@ -533,7 +533,9 @@ def find_cardname_byname(pot_cardnameS, scryfall_all_data, verbose = 1):
                 best_match = card_data
 
         closest_matches.append(best_match['name'])
-
+        
+    if verbose >1: print("closest_matches:", closest_matches)
+       
     return closest_matches
 
 

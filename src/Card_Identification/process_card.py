@@ -62,7 +62,7 @@ def create_rois_from_filename(filename, mtg_ocr_config, card= None, verbose =0):
     mtg_ocr_config = MtGOCRData()
     
     title = filename.strip(".jpg")
-    modes = ["exp", "ui", "name"]
+    modes = ["name", "ui", "exp"]
 
     for mode in modes:
         coordinates = mtg_ocr_config.get_coordinates_from_file(mode)
@@ -118,45 +118,54 @@ def get_roi(card, coordinates=None, title=None, verbose=1):
         
     if not isinstance(coordinates[0][0], list):
       coordinates = [coordinates]
+      print("coordinates were changed")
 
+    # print(coordinates)
+    # coordinates = coordinates[0]
+    print(coordinates)
+    # top_left = [min(coordinates[0][0], coordinates[1][0]), min(coordinates[0][1], coordinates[1][1])]
+    # bottom_right = [max(coordinates[0][0], coordinates[1][0]), max(coordinates[0][1], coordinates[1][1])]
+    
+    # coordinates = [top_left, bottom_right]
+    # coordinates = [coordinates]
+    
     for coord_pair in coordinates:
         x0, y0 = coord_pair[0]
         x1, y1 = coord_pair[1]
         height, width, _ = card.shape
         top_left = (int(width * x0), int(height * y0))
         bottom_right = (int(width * x1), int(height * y1))
+        
+     
         roi = card[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]]
     
-        if verbose > 0:
-            print(title)
+        if verbose > 2:
+            print("title in get roi", title)
             cv2.imshow(title, roi)
             cv2.waitKey(0)
             if cv2.getWindowProperty(title, cv2.WND_PROP_VISIBLE) == 1:
                   cv2.destroyWindow(title)
         yield roi
       
+        
+          
 
 def safe_card_roi(card_roi, title='filename', mode='roi', verbose=0):
     # Find the version number for the filename
     version = 1
     path_to_roi = get_path(PathType.PROCESSED_ROI)
-    if verbose >1: print("path to roi", path_to_roi)
+    if verbose >2: print("path to roi", path_to_roi)
     while os.path.exists(f"{path_to_roi}/{title}_{mode}_{version}.jpg"):
         version += 1
+        if verbose >2:
+            print("version +1 of", 
+                  f"{path_to_roi}/{title}_{mode}_{version}.jpg")
 
     # Construct the filename using the mode, title, and version
     filename = f"{path_to_roi}/{title}_{mode}_{version}.jpg"
 
-    if verbose >1 : print("filename", filename)
-    # Save the ROI with the constructed filename
-    if verbose > 1: print("safe card roi", get_path(PathType.PROCESSED_ROI, filename))
-    
-    print("error", get_path(PathType.PROCESSED_ROI, filename))
-    cv2.imshow("safecardroi present?", card_roi)
-    cv2.waitKey(0)
-
     cv2.imwrite(get_path(PathType.PROCESSED_ROI, filename), card_roi)
-    if verbose >0:
+    if verbose >2:
         print(f"Try to write ROIs {title}_{mode}_{version}.jpg")
     
 def checkif_imageloaded(result, error_message = None):

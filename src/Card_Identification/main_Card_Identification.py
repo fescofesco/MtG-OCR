@@ -83,7 +83,7 @@ def write_results_to_file(card_names, name=None, location=None):
     if not name.endswith(".txt"):
         name = name + '.txt'
     if location is None:
-        location = get_path("results")  # Use the default results path
+        location = get_path(PathType.RESULTS)  # Use the default results path
     
     path = os.path.join(location, name)  # Combine location and name using os.path.join()
 

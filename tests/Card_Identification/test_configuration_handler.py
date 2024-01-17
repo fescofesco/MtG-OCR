@@ -148,6 +148,7 @@ class TestConfigurationHandler(unittest.TestCase):
         print(mtg_ocr_config.get_coordinates_from_file("ui"))
         print(mtg_ocr_config.get_coordinates_from_file("exp"))
         print(mtg_ocr_config.get_coordinates_from_file("name"))
+        self.assertEqual(1,1)
         
 if __name__ == '__main__':
     # print("MAIN", get_path(PathType.CONFIG))

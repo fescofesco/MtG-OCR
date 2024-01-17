@@ -18,7 +18,8 @@ from src.Card_Identification.card_extraction import extract_card
 from src.Card_Identification.path_manager import (PathType,
 get_path, return_folder_contents)
 from src.Card_Identification.process_card import create_rois_from_filename
-from src.Card_Identification.process_rois import return_cardname_from_ROI
+from src.Card_Identification.process_rois import (
+    return_cardname_from_ROI, display_cardname)
 
   
 
@@ -34,12 +35,22 @@ class PathType(Enum):
 @patch('src.Card_Identification.path_manager.PathType', PathType)
 @patch('src.Card_Identification.configuration_handler.PathType', PathType)
 class TestProcessCard(unittest.TestCase):
+    
 
+       
 
     @patch('src.Card_Identification.process_card.PathType', PathType)    
     @patch('src.Card_Identification.path_manager.PathType', PathType)
     @patch('src.Card_Identification.configuration_handler.PathType', PathType)
+    @patch('src.Card_Identification.card_extraction.PathType', PathType)
+    @patch('src.Card_Identification.process_rois.PathType', PathType)
     def setUp(self):
+        
+        self.mtg_ocr_config = MtGOCRData()
+        self.potential_letters = self.mtg_ocr_config.get_Mtg_letters()
+        self.scryfall_all_data= self.mtg_ocr_config.open_scryfall_file()
+        
+        
         # This method will be called before each test method is executed
         # Delete all files in the test folder before running the test
         test_folder_path = get_path(PathType.PROCESSED_ROI)
@@ -53,7 +64,7 @@ class TestProcessCard(unittest.TestCase):
         try:
             file_path = get_path(PathType.CONFIG, "parameters.txt")
             os.unlink(file_path)
-            print("path of parameters.txt", file_path)
+            # print("path of parameters.txt", file_path)
             mtg_ocr_config = MtGOCRData()
         except Exception as e:
             print(f"Failed to delete {file_path}. Error: {e}")
@@ -67,79 +78,87 @@ class TestProcessCard(unittest.TestCase):
     @patch('src.Card_Identification.process_rois.PathType', PathType)
     def test_create_rois_from_filename_visageofDrad_doubleside(self):
         
-        mtg_ocr_config = MtGOCRData()
-        potential_letters = mtg_ocr_config.get_Mtg_letters()
-        scryfall_all_data= mtg_ocr_config.open_scryfall_file()
-        
-        verbose = 0
-      
-      
         #  Visage of Dread, LCI 
-        filename = "4.jpg" 
-    
-    
-           
-        path = get_path(PathType.RAW_IMAGE, filename,2)
-        
-    
-       
-        card, error = extract_card(path,verbose)
+        filename = "4.jpg"
+        path = get_path(PathType.RAW_IMAGE, filename)
+        card, error = extract_card(path,verbose = 1)
         if error != None:
             print("error:", error)
          
-        mtg_ocr_config.set_relative_coordinates(card, verbose =1)
-        create_rois_from_filename(filename, mtg_ocr_config, card, verbose = 2)
+        self.mtg_ocr_config.set_relative_coordinates(card, verbose =1)
+        create_rois_from_filename(filename, self.mtg_ocr_config, card, verbose = 2)
     
-        # 1 open the mtg scryfall data
-        # mtg_ocr_config  = MtGOCRData
-      
-        pot_letters = "WdE&Su0\u00e261fF(4O\u00fctkJ\u00f6nZz\u00f1y\u00c9YICNla\\'_ \u00edcjh\u00e19\u00fa\u00e3HX\u0160M\u00e0s7Pp\u00f3\u00fb8v+:\u00e9beq3L-TiVwm?Qx\u00e4\\\"goGDU\u00aeA!K2/rB.),R"
-    
-        # delete_duplicate_ROIs(filename,verbose)
-        cardname = return_cardname_from_ROI(filename, scryfall_all_data, verbose =0)
-        # display_cardname(cardname)
+        cardname = return_cardname_from_ROI(filename, self.scryfall_all_data, verbose =0)
+        display_cardname(cardname)
         self.assertEqual(cardname[0]["name"],"Visage of Dread // Dread Osseosaur")
-        
+        print("name", cardname[0]['name'])
+        print("set", cardname[0]['set'])
         self.assertEqual(cardname[0]["set"],"lci")
 
+    @patch('src.Card_Identification.process_card.PathType', PathType)    
+    @patch('src.Card_Identification.path_manager.PathType', PathType)
+    @patch('src.Card_Identification.configuration_handler.PathType', PathType)
+    @patch('src.Card_Identification.card_extraction.PathType', PathType)
+    @patch('src.Card_Identification.process_rois.PathType', PathType)
     def test_create_rois_from_filename_foodtoken(self):
-        
-        mtg_ocr_config = MtGOCRData()
-        potential_letters = mtg_ocr_config.get_Mtg_letters()
-        scryfall_all_data= mtg_ocr_config.open_scryfall_file()
-        
-        verbose = 0
-      
-      
-        #  Visage of Dread, LCI 
-        filename = "IMG_20231222_111834.jpg" 
-        # Food Token ELD
+          # Food Token ELD
         filename = "3.jpg"
-    
-           
-        path = get_path(PathType.RAW_IMAGE, filename,2)
-        
-    
-       
-        card, error = extract_card(path,verbose)
+        path = get_path(PathType.RAW_IMAGE, filename)
+        card, error = extract_card(path,verbose = 1)
         if error != None:
             print("error:", error)
          
-        mtg_ocr_config.set_relative_coordinates(card, verbose =1)
-        create_rois_from_filename(filename, mtg_ocr_config, card, verbose = 2)
+        self.mtg_ocr_config.set_relative_coordinates(card, verbose =1)
+        create_rois_from_filename(filename, self.mtg_ocr_config, card, verbose = 2)
     
-        # 1 open the mtg scryfall data
-        # mtg_ocr_config  = MtGOCRData
-      
-        pot_letters = "WdE&Su0\u00e261fF(4O\u00fctkJ\u00f6nZz\u00f1y\u00c9YICNla\\'_ \u00edcjh\u00e19\u00fa\u00e3HX\u0160M\u00e0s7Pp\u00f3\u00fb8v+:\u00e9beq3L-TiVwm?Qx\u00e4\\\"goGDU\u00aeA!K2/rB.),R"
-    
-        # delete_duplicate_ROIs(filename,verbose)
-        cardname = return_cardname_from_ROI(filename, scryfall_all_data, verbose =0)
+        cardname = return_cardname_from_ROI(filename, self.scryfall_all_data, verbose =0)
+        display_cardname(cardname)
         # display_cardname(cardname)
         self.assertEqual(cardname[0]["name"],"Food")
-        
         self.assertEqual(cardname[0]["set"],"teld")
 
+    @patch('src.Card_Identification.process_card.PathType', PathType)    
+    @patch('src.Card_Identification.path_manager.PathType', PathType)
+    @patch('src.Card_Identification.configuration_handler.PathType', PathType)
+    @patch('src.Card_Identification.card_extraction.PathType', PathType)
+    @patch('src.Card_Identification.process_rois.PathType', PathType)
+    def test_create_rois_from_filename_goblin(self):
+        # Goblin Token GRN
+        filename = "2.jpg"
+        path = get_path(PathType.RAW_IMAGE, filename)
+        card, error = extract_card(path,verbose = 1)
+        if error != None:
+            print("error:", error)
+        self.mtg_ocr_config.set_relative_coordinates(card, verbose =1)
+        create_rois_from_filename(filename, self.mtg_ocr_config, card, verbose = 0)
+        cardname = return_cardname_from_ROI(filename, self.scryfall_all_data, verbose =0)
+        display_cardname(cardname)
+        # display_cardname(cardname)
+        self.assertEqual(cardname[0]["name"],"Goblin")
+        # cant check for set because resolution  is to low
+        # self.assertEqual(cardname[0]["set"],"grn")
+    
+    @patch('src.Card_Identification.process_card.PathType', PathType)    
+    @patch('src.Card_Identification.path_manager.PathType', PathType)
+    @patch('src.Card_Identification.configuration_handler.PathType', PathType)
+    @patch('src.Card_Identification.card_extraction.PathType', PathType)
+    @patch('src.Card_Identification.process_rois.PathType', PathType)
+    def test_create_rois_from_filename_asmo(self):
+        # Asmoranomardicadaistinaculdacar from mh2
+        filename = "1.jpg"
+        path = get_path(PathType.RAW_IMAGE, filename)
+        card, error = extract_card(path,verbose = 0)
+        if error != None:
+            print("error:", error)
+        self.mtg_ocr_config.set_relative_coordinates(card, verbose =1)
+        create_rois_from_filename(filename, self.mtg_ocr_config, card, verbose = 0)
+        cardname = return_cardname_from_ROI(filename, self.scryfall_all_data, verbose =1)
+        display_cardname(cardname)
+        # display_cardname(cardname)
+        self.assertEqual(cardname[0]["name"],"Asmoranomardicadaistinaculdacar")
+        # cant check for set because resolution is to bad
+        # self.assertEqual(cardname[0]["set"],"mh2")
+            
 if __name__ == '__main__':
     unittest.main()
 

@@ -156,53 +156,19 @@ The default values are defining two edges of a rectanlge of the card snippet
         default_config = {
         "phone_IMG_directory": None,
         "scryfall_file_date": "2024-01-11 22:05:17",
-        "ui":[ 
-            [
-                [
-                    0.067, 0.906
-                ], 
-                [
-                    0.4509, 0.97
-                    ]
-                ]
-           ],
+        "ui":[
+            [[0.067, 0.906],[0.4509, 0.97]]
+            ],
         "exp": [
-             [
-                 [
-                     0.82242, 0.6733333
-                     ],
-                 [
-                     0.9135514, 0.723
-                     ]
-                 ],
-             [
-                 [
-                     0.7943, 0.56334
-                     ],
-                 [
-                     0.9275, 0.62833
-                     ]
-                 ]
+            [[0.8224, 0.6733],[0.9135, 0.723]],
+            [[0.7943, 0.5633],[0.9275, 0.62833]],
+            [[0.7757, 0.7916],[0.9204, 0.86166]]
            ],
         "name": [
-            [
-                [
-                    0.406542, 0.06
-                    ],
-                [
-                    0.63317, 0.13
-                    ]
-                ],
-            [
-                [
-                    0.707, 0.165
-                    ],
-                [
-                    0.1799,
-                    0.06667
-                    ]
-                ]
-           ],
+            [[0.20093, 0.095],[0.58411, 0.1467]],
+            [[0.3434, 0.06], [0.621, 0.1333]],
+            [[0.0983, 0.086], [0.9156, 0.13666]]
+            ],
           "Mtg_letters": "[\u00ae\u00e0\u00e3c\u0160\u00faezO_C\\\")0bI(+ri:?!aLHXkSGdxtN\u00e19\u00f1lwAqgM\u00e2PUno\u00fcjJs\u00e9WpZ&\u00e4Vh\u00f3v3-\u00f6Ey\u00ed.B4K\u00fb,8FRm1f6/Q\\'\u00c9DT2u Y7]"
         }  
         self.parameters_config = default_config      
@@ -461,19 +427,19 @@ The default values are defining two edges of a rectanlge of the card snippet
                     top_left = (min(relative_coordinates[0][0], relative_coordinates[1][0]), min(relative_coordinates[0][1], relative_coordinates[1][1]))
                     bottom_right = (max(relative_coordinates[0][0], relative_coordinates[1][0]), max(relative_coordinates[0][1], relative_coordinates[1][1]))
                     
-                    coordinates = (top_left, bottom_right)
-                    if verbose >1: print("coordinates", coordinates)
+                    coordinates = [top_left, bottom_right]
+                    if verbose >2: print("coordinates", coordinates)
                     
                     # coordinates = tuple(relative_coordinates)
-                    mode = self.determine_mode(relative_coordinates[0][1])  # Determine mode based on y position
-                    if verbose > 0: print(mode, "added with rel. coordinates: ", relative_coordinates)
+                    mode = self.determine_mode(top_left)  # Determine mode based on y position
+                    if verbose > 0: print(mode, "added with rel. coordinates: ", coordinates)
                     self.save_coordinates(mode, coordinates)  # Save coordinates to file based on mode
                     cv2.imshow(window_name, resized_image)
                     cv2.setMouseCallback(window_name, self.click_event, param)
                     
 
     
-    def determine_mode(self,y_coordinate):
+    def determine_mode(self,top_left):
         """
         depends the relative height of the roi measured from the top of the card 
         to save it accordingly to either 
@@ -496,6 +462,12 @@ The default values are defining two edges of a rectanlge of the card snippet
             'ui' unique identifier
                   
         """
+        y_coordinate = top_left[0]
+        x_coordinate = top_left[1]
+        
+        if x_coordinate >= 0.7:
+            return "exp"
+        
         if 0 <= y_coordinate <= 0.35:
             return 'name'
         elif 0.36 <= y_coordinate <= 0.7:
@@ -528,7 +500,7 @@ The default values are defining two edges of a rectanlge of the card snippet
         with open(get_path(PathType.CONFIG, filename), 'r') as file:
             data = json.load(file)
        
-        if verbose > 0: print(data)
+        if verbose > 2: print("data:", data)
         if mode in data:
             return data[mode]
         else:
@@ -538,6 +510,35 @@ The default values are defining two edges of a rectanlge of the card snippet
             print("Define extractino area:")
             
             return None
+    def show_all_rois(self, image, verbose:int = 0):
+        """
+
+        Parameters
+        ----------
+        image : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
+        
+        with open(get_path(PathType.CONFIG, filename), 'r') as file:
+            data = json.load(file)
+                
+        for mode in modes["ui","name","exp"]:
+            if mode in data:
+                
+                return data[mode]
+            else:
+                print("Error, parameters.txt not found or mode not found.")
+                print(" mode: ", mode)
+                
+                print("Define extractino area:")
+                
+             
+        
 
 
     def get_latest_scryfall_file(self):
@@ -847,7 +848,8 @@ if __name__ == "__main__":
     # mtg_ocr_data.set_phone_directory()
 
     print(CubeData.get_cube_url())
-    
+    print("ui")
     print(mtg_ocr_config.get_coordinates_from_file("ui"))
     print(mtg_ocr_config.get_coordinates_from_file("exp"))
+    print("name")
     print(mtg_ocr_config.get_coordinates_from_file("name"))
