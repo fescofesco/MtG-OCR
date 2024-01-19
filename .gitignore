@@ -10,8 +10,8 @@ notimplemented/
 data/Card_Identification/processed_ROIs/
 data/Card_Identification/final_ROIs/
 data/Card_Identification/config/
-data/Card_Identification/results/
-
+data/Card_Identificat180ion/results/
+data/Card_Identification/raw_IMGs
 
 
 # Byte-compiled / optimized / DLL files

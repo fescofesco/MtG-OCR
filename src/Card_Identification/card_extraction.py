@@ -295,6 +295,7 @@ def display_image(name: str, image, width: int=600):
     length = int(width * image.shape[0] / image.shape[1])
     cv2.resizeWindow(name, width, length)
     cv2.imshow(name, image)
+    cv2.waitKey(0)
 
 def corner_points(input_corners):    
     """

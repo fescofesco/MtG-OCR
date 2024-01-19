@@ -12,12 +12,15 @@ writes the results to a file
 
 from src.Card_Identification.path_manager import (get_path, PathType)
 import os 
+import datetime
+import json
 
-
-def write_results_to_file(card_names, name=None, location=None):
+def write_results_to_file(card_names, name=None, nodatetime=None, location=None):
     if name is None:
         name = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")  # Use current date and time as default name
-    
+    elif nodatetime is None:
+        name = name + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        
     if not name.endswith(".txt"):
         name = name + '.txt'
     if location is None:

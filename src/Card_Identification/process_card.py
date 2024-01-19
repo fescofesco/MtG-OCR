@@ -120,14 +120,7 @@ def get_roi(card, coordinates=None, title=None, verbose=1):
       coordinates = [coordinates]
       print("coordinates were changed")
 
-    # print(coordinates)
-    # coordinates = coordinates[0]
-    print(coordinates)
-    # top_left = [min(coordinates[0][0], coordinates[1][0]), min(coordinates[0][1], coordinates[1][1])]
-    # bottom_right = [max(coordinates[0][0], coordinates[1][0]), max(coordinates[0][1], coordinates[1][1])]
-    
-    # coordinates = [top_left, bottom_right]
-    # coordinates = [coordinates]
+
     
     for coord_pair in coordinates:
         x0, y0 = coord_pair[0]

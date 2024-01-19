@@ -606,7 +606,9 @@ The default values are defining two edges of a rectanlge of the card snippet
             json.dump(result_list, f, indent=0)
 
     def open_scryfall_file(self, verbose=0):
+        if verbose >0: print("opening scryfall file")
         files_in_directory = return_folder_contents(get_path(PathType.CONFIG))
+        self.delete_old_scryfall_files()
         if verbose > 0: print(files_in_directory)
         # Search for a file with a filename that starts with "default-cards" and ends with ".json"
         for filename in files_in_directory:
@@ -620,36 +622,40 @@ The default values are defining two edges of a rectanlge of the card snippet
           
         return scryfall_file
     
-    def delete_old_scryfall_files(verbose=0):
-        # Get all files in the directory
-        files_in_directory = get_path(PathType.CONFIG)
-    
+    def delete_old_scryfall_files(self,verbose=0):
+        # Get the directory path
+        directory_path = get_path(PathType.CONFIG)
+        
         # Filter files that start with "default-cards" and end with ".json"
-        relevant_files = [filename for filename in files_in_directory if filename.startswith("default-cards") and filename.endswith(".json")]
-    
+        relevant_files = [filename for filename in os.listdir(directory_path) if filename.startswith("default-cards") and filename.endswith(".json")]
+        
         # Extract and convert datetime from filenames
         file_date_times = []
         for filename in relevant_files:
             # Extract date and time information from the filename
             datetime_string = filename.split("default-cards-")[1].split(".json")[0]
-    
+        
             # Convert the extracted string into a datetime object
             try:
                 file_datetime = datetime.strptime(datetime_string, "%Y%m%d%H%M%S")
                 file_date_times.append((filename, file_datetime))
             except ValueError:
                 pass  # Skip files with invalid datetime formats
-    
+        
         # Sort files based on datetime information in the filename
         file_date_times.sort(key=lambda x: x[1], reverse=True)
-    
+        
         # Keep the most recent file and delete the older ones
         for idx, (filename, _) in enumerate(file_date_times):
             if idx > 0:
+                # Create the full file path
+                file_path = os.path.join(directory_path, filename)
+                
                 # Delete older files
-                os.remove(filename)
+                os.remove(file_path)
                 if verbose > 0:
-                    print(f"Deleted: {filename}")
+                    print(f"Deleted: {file_path}")
+                print(f"Deleted: {file_path}")
     
    
 
