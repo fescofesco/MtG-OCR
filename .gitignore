@@ -2,9 +2,14 @@
 # Resporatory Specific Files
 cubecobralogin.txt
 
+data/Card_Identification/raw_IMGs/2023-12-24
+/data/Card_Identification/results/
+
 default-cards-*.json
 .notimplemented/
 notimplemented/
+
+
 
 !.gitkeep
 data/Card_Identification/processed_ROIs/
@@ -19,7 +24,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-
+*.csv
 # C extensions
 *.so
 

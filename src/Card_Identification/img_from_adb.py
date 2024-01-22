@@ -17,6 +17,8 @@ main function is transfer_images_from_device()
 import subprocess
 import os
 from datetime import datetime
+from src.Card_Identification.path_manager import (get_path, PathType,return_folder_image_contents)
+
 
 
 
@@ -24,7 +26,7 @@ from datetime import datetime
 
     
 def transfer_images_from_device(source_folder="MTG-OCR", 
-                    destination_subfolder="ImgStorage", verbose = 0):
+                   destination_directory = None, verbose = 0):
     """
     transfers images from the android device from subfodler MTG-OCR 
     and stores them in the subfolder /ImgStorage for further processing with
@@ -49,7 +51,8 @@ def transfer_images_from_device(source_folder="MTG-OCR",
         
     destination_subfolder : TYPE, optional
         destination_subfolder="ImgStorage": the folder the function sends the
-            images to. The default is "ImgStorage".
+            images to. The default is get_path(PathType.RAW_IMAGE)
+            data / Card_Identification / raw_images
         
      verbose : TYPE, optional
          DESCRIPTION. The default is 0.
@@ -60,12 +63,18 @@ def transfer_images_from_device(source_folder="MTG-OCR",
         No output but files get transferred.
 
     """
-    # Check if the device is connected
+    
+
+    
+    if destination_directory is None:
+        destination_directory = get_path(PathType.RAW_IMAGE)
+    
     if not is_device_connected():
         print("img_fom_adb.py: transfer_images_form_device()")
         print("Device is not connected.")
         return None
 
+    print(source_folder)
     if os.path.exists(source_folder):
         source_directory = source_folder
         print(f"Using provided source folder: {source_directory}")
@@ -107,7 +116,7 @@ def transfer_images_from_device(source_folder="MTG-OCR",
             print("File list: \n", file_list, "\n")
     
         # Create the destination subfolder if it doesn't exist
-        destination_directory = os.path.join(os.getcwd(), destination_subfolder)
+        # destination_directory = os.path.join(os.getcwd(), destination_subfolder)
         if not os.path.exists(destination_directory):
             os.makedirs(destination_directory)
         # After transferring files, add this block to delete them from the device
@@ -121,10 +130,15 @@ def transfer_images_from_device(source_folder="MTG-OCR",
             # subprocess.run(f"adb pull '{file_path}' '{destination_file}'", shell=True)
             # subprocess.run(f"adb pull '{file_path}' '{destination_directory}'", shell=True)
             
-            output = subprocess.run(f"adb pull '{file_path}' '{destination_directory}'",
-                                    shell=True,
-                                    capture_output=True,
-                                    text=True).stdout
+            # output = subprocess.run(f"adb pull '{file_path}' '{destination_directory}'",
+            #                         shell=True,
+            #                         capture_output=True,
+            #                         text=True).stdout
+            
+            
+            output = subprocess.run(f"adb pull {file_path} {destination_directory}", shell=True,
+                        capture_output=True, text=True).stdout
+
 
             if output:
                 print("ADB pull command output:")
@@ -140,7 +154,7 @@ def transfer_images_from_device(source_folder="MTG-OCR",
         for file_path in file_list:
             destination_file = os.path.join(destination_directory, os.path.basename(file_path))
             if os.path.exists(destination_file):
-                os.remove(destination_file)
+                os.remove(source_directory)
     
         if verbose > 0:
             print("Images transferred from the Android device",
@@ -327,22 +341,16 @@ def is_device_connected():
 # Example usage of the function
 if __name__ == "__main__":
     
-    print("ADB shell, save different location, e.g. mit vererbung bla hat der \
-          fabi das jetzt deaktiviert")
+
     # transfer_images_from_device()
 
 
   # Get the current date for the folder name
     date = datetime.now().strftime("%Y-%m-%d")
+    source_folder= "MTG-OCR"
+    destination_folder = get_path(PathType.RAW_IMAGE)
+    transfer_images_from_device(source_folder, 
+                       destination_folder, verbose = 2)
+        
 
-    # Call the function with the current date for the destination_subfolder
-    transfer_images_from_device(
-        source_folder="MTG-OCR",
-        destination_subfolder="ImgStorage\\" + date,
-        verbose=1
-    )
     
-    
-    transfer_images_from_device(
-        source_folder="MTG-OCR",
-        destination_subfolder="tests", verbose=1)

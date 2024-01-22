@@ -21,7 +21,7 @@ def move_content_to_subfolders(path_to_directory, verbose =0):
     image_files = [file for file in os.listdir(path_to_directory) if file.lower().endswith(('.png', '.jpg', '.jpeg'))]
 
     if not image_files:
-        print("No images to transfer. Exiting.")
+        if verbose >0: print("No images to transfer. Exiting.")
         return
              
     # Get the current datetime as a string (formatted)
@@ -100,9 +100,7 @@ def select_and_copy_images_to_data(path=None, verbose=0):
         root.destroy()  # Close the Tkinter window
         return
 
-    for myPathType in [PathType.RAW_IMAGE, PathType.PROCESSED_ROI,PathType.FINAL_ROI, PathType.RESULTS]:
-        path_to_directory = get_path(myPathType)
-        move_content_to_subfolders(path_to_directory)
+
                 
 
     # Copy each new image file to the destination directory
