@@ -70,7 +70,7 @@ gets input from extract_card() and creates ROIS in the directory
 creates rois in `~\git\MtG-OCR\data\Card_Identification\processed_ROI\ imagename.jpg`
 
 
-## 3) #process_rois
+## 3) #process_rois.py
 ```python
 def return_cardname_from_ROI(filename, scryfall_all_data, verbose = 0):
 ```
@@ -81,6 +81,17 @@ checks the rois for information and
 
 a DATETIME.txt file with all the results in form of a list of scryfall_dicts and the image name will be created in 
 MtG-OCR\data\Card_Identification\results
+
+## 4) #user_dialog_cardname.py
+
+Confirm the cardname
+
+## 5) #safe_results.py
+```python
+def write_results_to_file(card_names, name=None, nodatetime=None, location=None):
+```
+to .txt file at location 
+`~\git\MtG-OCR\data\Card_Identification\results` 
 
 
 Notes:
