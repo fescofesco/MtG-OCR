@@ -1,100 +1,98 @@
-# MtG-OCR
+# [MtG-OCR](https://github.com/fescofesco)
 
 This program allows for Magic the Gathering Cards (MtG) identification recognition from images.
 
 The program is structured in several steps which are located on several scripts. Each script has one main func and is currently able to get started by its own. 
-To test the program either start the individual scripts or the tests stored in the ../../MtG-OCR/test/Card_Identification folder
+To test the program either start the individual scripts or the tests stored in the `~git/MtG-OCR/test/Card_Identification` folder
 
 
 # Setup 
 
-pip install -requirments
-
+Start by installing the required modules.
 ```text
   pip install -r requirements.txt
   
 ```
 
-install pystessearct and set it to path
-```text
-  pip install pytesseract
-  
-```
-and set it to path
-`C:\Programm Files(x86)\Tesseract-OCR\'
+install [pytesseract](https://digi.bib.uni-mannheim.de/tesseract/)
 
-if you want to use the "adb" mode, install 
-[adb](https://github.com/google/python-adb)
-Note, adb  will change in further releases to [adb-shell](https://github.com/JeffLIrion/adb_shell)
+and set it to path
+`C:/Programm Files(x86)/Tesseract-OCR/'
+
+To use the "adb" mode, install 
+[adb](https://github.com/google/python-adb) first.
+In further versions adb  will change be replaced with [adb-shell](https://github.com/JeffLIrion/adb_shell).
 
 
 # Workflow
 
-## 0) 
-Run 
-`~\git\MtG-OCR\scr\Card_Identification\main_Card_Identification.py`
-wit the mode  `"quickstart"`
-"quickstart" allows to select the folder the card images are present. Then the images are safed to the internal working direction. All already present images will be moved to subfolders with the current DATETIME. 
-
+1.  ### Start the main function 
+The main function is located in `~/git/MtG-OCR/scr/Card_Identification/main_Card_Identification.py`
+The suggested mode is `quickstart`.
+* `quickstart` allows to select the folder the card images are present. Then the images are safed to the internal working direction. All already present images will be moved to subfolders with the current DATETIME. 
 and then run 
-`~\git\MtG-OCR\scr\Card_Identification\main_Card_Identification.py`
+`~/git/MtG-OCR/scr/Card_Identification/main_Card_Identification.py`
+* `all files`: Alternatively, the images can be directoly safed  to 
+`~/git/MtG-OCR/data/Card_Identification/raw_IMGs` 
+and `~/git/MtG-OCR/scr/Card_Identification/main_Card_Identification.py` can be run with `all files`.
+*  `adb` mode automatically downloads all images from the folder `MtG-OCR` on the android device  to the correct working directory 
+`~/git/MtG-OCR/data/Card_Identification/raw_IMGs`. Debugging must be enabled. See [https://developer.android.com/tools/adb](https://developer.android.com/tools/adb) 
 
 
 
-Alternatively, the images can be directoly safed  to 
-`~\git\MtG-OCR\data\Card_Identification\raw_IMGs` 
-
-and 
-`~\git\MtG-OCR\scr\Card_Identification\main_Card_Identification.py` can be run with `"all files"`.
-
-the `"adb"` mode automatically downloads all images to the correct working directory 
-`~\git\MtG-OCR\data\Card_Identification\raw_IMGs` 
-
-
-
-## 1) card_extraction.py 	
+2. ### card_extraction.py 	
 ```python
 path_to_img = ../../MtG-OCR/data/Card_Identification/raw_image/ imagename.jpg
 
 	def extract_card(path_to_img, verbose=0)
+	
+	return error, card
 ```
-return card as cv2 images
-this func finds the image 
+A single card is returned as cv2 (cv2 is a pyton module) image from an image containing a single card. 
 
 
-## 2) #process_card.py
+
+3. ### process_card.py
 ```python
 def create_rois_from_filename(filename, mtg_ocr_config, card= None, verbose =0):
 ```
-gets input from extract_card() and creates ROIS in the directory
-creates rois in `~\git\MtG-OCR\data\Card_Identification\processed_ROI\ imagename.jpg`
+This func gets input from `extract_card()` and creates ROIS (pictures of regions of interest) in the directory
+`~/git/MtG-OCR/data/Card_Identification/processed_ROI/ imagename.jpg`
 
 
-## 3) #process_rois.py
+4. ###  process_rois.py
 ```python
 def return_cardname_from_ROI(filename, scryfall_all_data, verbose = 0):
 ```
 
-checks the rois for information and 
+This func checks the rois for information to extract the cardname, set and collectornumber.
 
+5. ### user_dialog_cardname.py
 
+The user confirms the found cardname, collector number, and set.  
 
-a DATETIME.txt file with all the results in form of a list of scryfall_dicts and the image name will be created in 
-MtG-OCR\data\Card_Identification\results
-
-## 4) #user_dialog_cardname.py
-
-Confirm the cardname
-
-## 5) #safe_results.py
+6. ### safe_results.py
 ```python
 def write_results_to_file(card_names, name=None, nodatetime=None, location=None):
 ```
-to .txt file at location 
-`~\git\MtG-OCR\data\Card_Identification\results` 
+The results are safed as 
+results_DATETIME.txt --> identified card as a list of scryfall data 
+identified_card_DATETIME.txt --> filename and a list  
+"name,CMC,Type,Color,Set,Collector Number,Rarity,Color Category,status,Finish,maybeboard,image URL,image Back URL,tags,Notes,MTGO ID" which can be then safed as a .csv file to exported to [cubecobra](www.cubecobra.com)
+unidentified_card_DATETIME.txt --> filenames which could not be identified
+file with all the results in form of a list of 
+scryfall_dicts and the image name will be created in 
+`~MtG-OCR/data/Card_Identification/results`
+
+# Results
+The location of the safed files is 
+`~/git/MtG-OCR/data/Card_Identification/results` 
 
 
-Notes:
-if `verbose >0`, the program will display images as long as the user clicks any key. 
-except when defining new ROIs to be analysed from the user, then read the window name:
+
+# Notes
+If verbose `> 0` the program will keep displaying images, and not move on, until the
+the user presses any key.
+
+Except when defining new ROIs to be analysed from the user, then read the window name:
 by clicking in the image window the ROI can be defined, if defined correctly press `ENTER` so the ROI will be saved and analysed later. If finished with defining ROIS, quit by pressing `'q'`, `'Q'` or `'ESC'`
