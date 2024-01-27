@@ -70,6 +70,7 @@ class PathType(Enum):
 
     RESULTS = str(BASE_DIR / 'data' / 'Card_Identification' / 'results')
     RAW_IMAGE = str(BASE_DIR / 'data' / 'Card_Identification' / 'raw_IMGs')
+    RAW_IMAGE_TEST = str(BASE_DIR / 'tests'/ 'data' / 'Card_Identification' / 'raw_IMGs')
     PROCESSED_ROI = str(BASE_DIR / 'data' / 'Card_Identification' / 'processed_ROIs')
     FINAL_ROI = str(BASE_DIR / 'data' / 'Card_Identification' / 'final_ROIs')
     CONFIG = str(BASE_DIR / 'data' / 'Card_Identification' / 'config')
@@ -179,3 +180,5 @@ if __name__ == "__main__":
     print(return_folder_contents(get_path(PathType.PROCESSED_ROI)))
     print(return_folder_contents(get_path(PathType.FINAL_ROI)))
     print(return_folder_image_contents(get_path(PathType.RAW_IMAGE)))
+    print(return_folder_image_contents(get_path(PathType.RAW_IMAGE_TEST)))
+

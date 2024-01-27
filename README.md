@@ -1,11 +1,7 @@
 # [MtG-OCR](https://github.com/fescofesco)
-
-This program allows for Magic the Gathering Cards (MtG) identification recognition from images.
-
-The program is structured in several steps which are located on several scripts. Each script has one main func and is currently able to get started by its own. 
-To test the program either start the individual scripts or the tests stored in the `~git/MtG-OCR/test/Card_Identification` folder
-
-
+This program identifies [Magic the Gathering (MtG)](https://magic.wizards.com/en) cards from images by optical-character-recognition (OCR) _via_ [pytesseract](https://github.com/UB-Mannheim/tesseract).
+The cards are safed as a [cubecobra](www.cubecobra.com) cube file in `~/git/MtG-OCR/data/Card_Identification/results\CubeCobra_DATETIME.csv`. 
+The program requires one card per image. The card may not project out of the image.
 # Setup 
 
 Start by installing the required modules.
@@ -14,33 +10,49 @@ Start by installing the required modules.
   
 ```
 
-install [pytesseract](https://digi.bib.uni-mannheim.de/tesseract/)
+Install [pytesseract](https://github.com/UB-Mannheim/tesseract).
+This version was tested with `tesseract-ocr-w64-setup-5.3.3.20231005.exe`.
+Set pytesseract to path `C:/Programm Files(x86)/Tesseract-OCR/`.
 
-and set it to path
-`C:/Programm Files(x86)/Tesseract-OCR/'
-
-To use the "adb" mode, install 
-[adb](https://github.com/google/python-adb) first.
-In further versions adb  will change be replaced with [adb-shell](https://github.com/JeffLIrion/adb_shell).
-
+ This step is optional:
+ To use the `adb` mode, install [adb](https://github.com/google/python-adb) first. Enable debugging on your android device. See [https://developer.android.com/tools/adb](https://developer.android.com/tools/adb) for an explanation on how to enable debugging.
+ Prepare a folder named `MTG-OCR` on your android device and safe card images there.
 
 # Workflow
 
-1.  ### Start the main function 
-The main function is located in `~/git/MtG-OCR/scr/Card_Identification/main_Card_Identification.py`
+## Running the program
+### Start the main function 
+The main function is located in `~/git/MtG-OCR/scr/Card_Identification/main_Card_Identification.py` and called `main_Card_Identification(mode:str = None, verbose = 2)`.
 The suggested mode is `quickstart`.
-* `quickstart` allows to select the folder the card images are present. Then the images are safed to the internal working direction. All already present images will be moved to subfolders with the current DATETIME. 
-and then run 
-`~/git/MtG-OCR/scr/Card_Identification/main_Card_Identification.py`
-* `all files`: Alternatively, the images can be directoly safed  to 
-`~/git/MtG-OCR/data/Card_Identification/raw_IMGs` 
-and `~/git/MtG-OCR/scr/Card_Identification/main_Card_Identification.py` can be run with `all files`.
-*  `adb` mode automatically downloads all images from the folder `MtG-OCR` on the android device  to the correct working directory 
-`~/git/MtG-OCR/data/Card_Identification/raw_IMGs`. Debugging must be enabled. See [https://developer.android.com/tools/adb](https://developer.android.com/tools/adb) 
+
+__Modes__
+* `quickstart` Select the folder where the card images are present. The images are safed to the internal working direction. All already present images will be moved to subfolders with the current DATETIME. Only the selected cards will be processed.
+* `all files`: The images must be safed to `~/git/MtG-OCR/data/Card_Identification/raw_IMGs` beforehand. Then the contents of this folder is processed.
+and all these images are processed. 
+*  `adb`: At program start all images from the folder `MTG-OCR` on the connected android device  are downloaed and transfered _via_ adb to the working directory 
+`~/git/MtG-OCR/data/Card_Identification/raw_IMGs`. All images from the android device are processed. 
+*  `adb-live`: Like adb, but the image contents of the MtG-OCR folder are downloaed continuously and only the newest image is processed. After each processed card a new image needs to be taken. This mode is suited for live analysis.
+### Output
+The location of the safed files is 
+`~/git/MtG-OCR/data/Card_Identification/results`.
+
+__The__ results are safed as: 
+* `results_DATETIME.txt`: identified card as a list of [scryfall data](https://scryfall.com/docs/api/cards) `[["filename1.jpg",{dict of scryfall_data of filename1}]]`
+* `identified_cards_DATETIME.txt`:  a list of filename the correspondig list  
+`[["filename1.jpg",[name,CMC,Type,Color,Set,Collector Number,Rarity,Color Category,status,Finish,maybeboard,image URL,image Back URL,tags,Notes,MTGO ID]]` 
+
+* `unidentified_cards_DATETIME.txt`: a list of filenames which could not be identified
+`[["filename1.jpg"]]`
+* `CubeCobraCSV.csv`: Created from `identified_cards_DATETIME.txt`. This `.csv` file can be exported manually to [cubecobra](www.cubecobra.com) to exchange ones cube.
+## Explanation of the program 
+The scripts are safed in `~/git/MtG-OCR/scr/Card_Identification`
 
 
 
-2. ### card_extraction.py 	
+	
+1. The program is started with the function  `main_Card_Identification(mode:str = None, verbose = 2)` in`~/git/MtG-OCR/scr/Card_Identification/main_Card_Identification.py`. 
+2. The function `extract_card(path_to_image, verbose)` in `card_extraction.py` outputs just the card part of an image (displaying a single card) as a [CV2](https://github.com/opencv/opencv) image. `Error`  shall be `None` or is a `str` if something went wrong.
+	
 ```python
 path_to_img = ../../MtG-OCR/data/Card_Identification/raw_image/ imagename.jpg
 
@@ -48,51 +60,32 @@ path_to_img = ../../MtG-OCR/data/Card_Identification/raw_image/ imagename.jpg
 	
 	return error, card
 ```
-A single card is returned as cv2 (cv2 is a pyton module) image from an image containing a single card. 
 
+3. The card is processed with `create_rois_from_filename(filename, mtg_ocr_config, card= None, verbose =0)`in `~/git/MtG-OCR/scr/Card_Identification/process_card.py`
 
-
-3. ### process_card.py
-```python
-def create_rois_from_filename(filename, mtg_ocr_config, card= None, verbose =0):
-```
-This func gets input from `extract_card()` and creates ROIS (pictures of regions of interest) in the directory
+	This function gets input from `extract_card()` and creates ROIs (pictures of regions of interest) in the directory
 `~/git/MtG-OCR/data/Card_Identification/processed_ROI/ imagename.jpg`
 
 
-4. ###  process_rois.py
-```python
-def return_cardname_from_ROI(filename, scryfall_all_data, verbose = 0):
-```
+4. The rois are pcoessed with ` return_cardname_from_ROI(filename, scryfall_all_data, verbose = 0) --> Cardname` in `~/git/MtG-OCR/scr/Card_Identification/process_rois.py`
+	
+	This function checks the rois for information to extract the cardname, set and collector_number. Output is `Cardname` which is a list of dicts of fitting scryfall entries. The list is sorted according to the [levenshtein distance](https://github.com/rapidfuzz/python-Levenshtein) of the identified cardnames, sets and collector_numbers in comparision to the scryfall card data. The first entry is the best fitting card data. 
 
-This func checks the rois for information to extract the cardname, set and collectornumber.
+5.  The user confirms the found cardname, collector_number, and set with `user_cardname_confirmation(filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, default_action=None)` in `~/git/MtG-OCR/scr/Card_Identification/user_dialog_cardname.py`.
 
-5. ### user_dialog_cardname.py
-
-The user confirms the found cardname, collector number, and set.  
-
-6. ### safe_results.py
-```python
-def write_results_to_file(card_names, name=None, nodatetime=None, location=None):
-```
-The results are safed as 
-results_DATETIME.txt --> identified card as a list of scryfall data 
-identified_card_DATETIME.txt --> filename and a list  
-"name,CMC,Type,Color,Set,Collector Number,Rarity,Color Category,status,Finish,maybeboard,image URL,image Back URL,tags,Notes,MTGO ID" which can be then safed as a .csv file to exported to [cubecobra](www.cubecobra.com)
-unidentified_card_DATETIME.txt --> filenames which could not be identified
-file with all the results in form of a list of 
-scryfall_dicts and the image name will be created in 
-`~MtG-OCR/data/Card_Identification/results`
-
-# Results
-The location of the safed files is 
-`~/git/MtG-OCR/data/Card_Identification/results` 
-
-
-
-# Notes
-If verbose `> 0` the program will keep displaying images, and not move on, until the
+6. The results are safed with `write_results_to_file(card_names, name=None, nodatetime=None, location=None)` in `~/git/MtG-OCR/scr/Card_Identification/save_results.py`.
+	
+## Notes
+### Program Handling
+If `verbose > 0` the program will keep displaying images, and not move on, until the
 the user presses any key.
+An exception to this rule is when the user defines new ROIs. Read the window name then.
+The ROIs are defined by clicking inside the window. Green squares appear and define the ROI. To save the ROIs press `ENTER`. Quit the window by pressing `q`, `Q` or `ESC`.
 
-Except when defining new ROIs to be analysed from the user, then read the window name:
-by clicking in the image window the ROI can be defined, if defined correctly press `ENTER` so the ROI will be saved and analysed later. If finished with defining ROIS, quit by pressing `'q'`, `'Q'` or `'ESC'`
+### Verbose
+Errors shall always be printed.
+Output in terminal:
+* `verbose == 0`: no output except the image of the card and the dialog to identify the card
+* `verbose == 1`: the above and output of the filepath and the identified potential cardnames, sets and collector_number
+* `verbose > 1`: the above and the display of internally createdd images and collected informations.
+

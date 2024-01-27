@@ -183,23 +183,16 @@ def checkif_imageloaded(result, error_message = None):
         return result
             
 if __name__ == "__main__":
-    
     #  get the necessary parameters from confiog parameters.txt handler
     mtg_ocr_config  = MtGOCRData()
-
     # put iamage as filename in path
-    path = get_path(PathType.RAW_IMAGE)
-    print(path)
-    filename = "IMG_20231222_111834.jpg"  
     filename = "3.jpg"
-  
-    path = get_path(PathType.RAW_IMAGE, filename)
-   
+    path = get_path(PathType.RAW_IMAGE_TEST, filename)
+    print(path)
     card, error = extract_card(path,verbose = 2)
     if error != None:
         print(error)
- 
-    create_rois_from_filename(filename, mtg_ocr_config, card,verbose =2)
+    create_rois_from_filename(filename, mtg_ocr_config, card,verbose =3)
     
     
    

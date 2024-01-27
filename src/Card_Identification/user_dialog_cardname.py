@@ -23,189 +23,17 @@ from src.Card_Identification.card_extraction import (extract_card, display_image
 from src.Card_Identification.process_card import (create_rois_from_filename)
 from src.Card_Identification.configuration_handler import MtGOCRData
 from src.Card_Identification.path_manager import (get_path, PathType,return_folder_image_contents)
-from src.Card_Identification.save_results import (write_results_to_file)
+from src.Card_Identification.save_results import (write_results_to_txt, write_results_to_csv)
 from src.Card_Identification.copy_img_to_data import (select_and_copy_images_to_data)
-from src.Card_Identification.save_results import write_results_to_file
 
 
-def save_card_infos(card_infos, card, filename, finish=None, status=None, maybeboard=None, image_url=None, image_back_url=None, tags=None, notes=None):
-# the scryfall.csv logic is: name,CMC,Type,Color,Set,Collector Number,Rarity,Color Category,status,Finish,maybeboard,image URL,image Back URL,tags,Notes,MTGO ID
-
-    # print("card_infos = ", card_infos)
-    if finish is None:
-        finish = ""
-    if status is None:
-        status = "Owned"
-    if maybeboard is None:
-        maybeboard = "false"
-    if image_url is None:
-        image_url = ""
-    if image_back_url is None:
-        image_back_url = ""
-    if tags is None:
-        tags = ""
-    if notes is None:
-        notes = ""
-        
-    try:
-        card_infos['mtgo_id']
-    except KeyError:
-        card_infos['mtgo_id'] = ""
-    
-    name = '"' + card_infos["name"] +'"'
-    cmc = int(card_infos["cmc"])
-    type_line = '"' + card_infos["type_line"].replace('—', '-')  + '"'
-    color_id = "".join(card_infos["color_identity"])
-    card_set = '"' + card_infos["set"] + '"'
-    ccn = '"' + card_infos["collector_number"] + '"'
-    rarity =  card_infos["rarity"]
-    
-    if len(card_infos["color_identity"]) ==1:
-        # color_category = card_infos["color_identity"]
-        color_category = [color.lower() for color in card_infos["color_identity"]]
-    else:
-        color_category = "m"
-  
-    status = status
-    finish = finish 
-    maybeboard = ""
-    image_url = ""
-    image_Back_URL = ""
-    tags = '"''"'
-    Notes = '"''"'
-    MTGO_ID =  card_infos["mtgo_id"]
-        
-    
-    entry = (name, cmc, type_line, color_id, card_set, ccn, rarity, status, finish, maybeboard, image_url, tags, Notes, MTGO_ID)
-    # entry =['"' + card_infos["name"]+'"', card_infos["cmc"], '"'+card_infos["type_line"]+'"', card_infos["color_identity"], '"'+card_infos["set"]+'"', card_infos["collector_number"], card_infos["rarity"],   [color.lower() for color in card_infos["color_identity"]],  status, finish, maybeboard, image_url, image_back_url, tags, notes, card_infos["mtgo_id"]] # Lowercase each element
-    title = filename + "_" + card_infos["name"] + "_" + card_infos["collector_number"] + "_" + card_infos["set"] + "_finish: " + finish + "_status: " + status + ".jpg"
-  
-    path = get_path(PathType.RESULTS, title)
-    cv2.imwrite(path, card)
-    return entry
-
-
-
-def save_infos(filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, default_action=None):
-    print(f"Save infos for {filename} in identified_DATETIME.txt")
-    finish = ""
-    status = "Owned"
-    card_data["identified_cards"].append((filename, save_card_infos(card_infos, card, filename, finish=finish, status=status)))
-    return card_data
-    
-def save_infos_foil(filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, default_action=None):
-    print(f"Save infos for {filename} with finish foil in identified_DATETIME.txt")
-    finish = "Foil"
-    status = "Owned"
-    card_data["identified_cards"].append((filename, save_card_infos(card_infos, card, filename, finish=finish, status=status)))
-    return card_data
-    
-def save_proxied(filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, default_action=None):
-    print(f"Save infos for {filename} with status Proxied")
-    finish = ""
-    status = "Proxied"
-    card_data["identified_cards"].append((filename, save_card_infos(card_infos, card, filename, finish=finish, status=status)))
-    return card_data
-    
-def move_to_unidentified(filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, default_action=None):
-    print(f"Move {filename} to undidentified_DATETIME.txt")
-    card_data["unidentified_cards"].append(filename)
-    return card_data
-    
-def scrap_image(filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, default_action=None):
-    print(f"Scrap image for {filename}. {filename} will NOT be moved to undidentified_DATETIME.txt")
-    return card_data
-    
-def define_rois(filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, default_action=None):
-    print(f"Define ROIs for {filename} and start anew")
-    mtg_ocr_config.set_relative_coordinates(card)
-    move_to_unidentified(filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, default_action)
-    return card_data
-
-
-def checkif_scryfall_file_contains_card(scryfall_file, pot_sets, pot_collector_numbers):
-    #  Check if the scryfall file contains 
-    # Return True if the card is found, otherwise return False
-    
-        # Convert collector numbers to integers to remove leading zeros
-    collector_numbers = [int(collector_number) for collector_number in pot_collector_numbers]
-    
-    # Find the smallest collector number
-    smallest_collector_number = min(collector_numbers)
-    
-    # Convert it back to a string if needed
-    smallest_collector_number_str = str(smallest_collector_number)
-
-    for card in scryfall_file:
-        for pot_set in pot_sets:
-                if card["set"] == pot_set.lower() and card["collector_number"] == smallest_collector_number_str:
-                    return card
-    return False
-
-
-
-def write_results_files(filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, default_action=None):
-    print("Write files chosen.")
-    write_results_to_file(card_data["unidentified_cards"],"unidentified_cards")
-    write_results_to_file(card_data["identified_cards"],"identified_cards")
-    user_cardname_confirmation(filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, default_action=None)
-    return card_data
-
-
-
-
-def exit_program(filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, default_action=None):
-    print("Exiting the program.")
-    sys.exit()
-
-def checkif_scryfall_file_contains_UI(user_input, filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, default_action):
-    #  Check if the scryfall file contains 
-    # Return True if the card is found, otherwise return False
-    try:
-        user_input = str(user_input)
-    
-        pot_sets = re.findall(r'\b[A-Za-z0-9]{3,4}\b', user_input)
-        pot_collector_number = re.findall(r'\b\d+\b', user_input)
-    
-
-        
-
-        # Add two zeros to the left
-        added_zeros = [number.rjust(len(number) + 2, '0') for number in pot_collector_number]
-        
-        # Remove two zeros from the left, and include variations without leading zeros
-        removed_zeros = [number[1:] if number.startswith('0') else number for number in pot_collector_number]
-        variations = [number for number in pot_collector_number if not number.startswith('0')]
-        
-        # Extend the original list with the results
-        extended_pot_collector_number = pot_collector_number + added_zeros + removed_zeros + variations
-        
-
-        
-        pot_collector_number =['0186']
-        
-        for card in scryfall_file:
-            for pot_set in pot_sets:
-                for pot_collector_number in extended_pot_collector_number:
-                   if card["set"] == pot_set.lower() and card["collector_number"] == pot_collector_number:
-                        mycard = card
-                        print(mycard["name"])
-                        return card
-        return None
-    
-    except ValueError:
-        return None
-    except IndexError:
-        return None
-
-def user_cardname_confirmation(filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, default_action=None):
+def user_cardname_confirmation(filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, verbose=1, default_action=None):
     """
     Displays a user confirmation dialog and returns the selected action.
     """
-    
-    display_image(card_infos["name"],card)
-    cv2.waitKey(0)
-    
+    if verbose > 0:
+        display_image(card_infos["name"],card)
+        cv2.waitKey(0)
     valid_choices = ['Y','F', 'P', 'U', 'N', 'R', 'X', 'W'] # and UI 
 
 
@@ -233,20 +61,20 @@ def user_cardname_confirmation(filename, card_infos, card_data, card, scryfall_f
         print("[W]rite current results to identified_DATETIME.txt and unidentified_DATETIME.txt in", get_path(PathType.RESULTS))
         print("[X] exit program")
         print("No, type UI to identify card")
-
+        print(red_title)
         # Get user input
         choice = input("Enter your choice: ").upper()
         
-        if len(choice) > 5:
+        if len(choice) > 4:
             new_card =  checkif_scryfall_file_contains_UI(choice, filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, default_action)
             if new_card != None:
-                card_data = user_cardname_confirmation(filename, new_card, card_data, card, scryfall_file, mtg_ocr_config, default_action)
+                card_data = user_cardname_confirmation(filename, new_card, card_data, card, scryfall_file, mtg_ocr_config, verbose, default_action)
                 return card_data
         
         if choice in valid_choices:
             break
-        else:
-            print("Invalid choice. Please enter a valid option.")
+        # else:
+        #     print("Invalid choice. Please enter a valid option.")
 
     # Define actions based on user choices
     actions = {
@@ -261,7 +89,150 @@ def user_cardname_confirmation(filename, card_infos, card_data, card, scryfall_f
     }
 
     # Perform the selected action
-    updated_card_data = actions[choice](filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, default_action=None)
+    updated_card_data = actions[choice](filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, verbose, default_action=None)
     
     cv2.destroyAllWindows()
     return updated_card_data
+
+def save_card_infos(card_infos, card, filename, finish=None, status=None, maybeboard=None, image_url=None, image_back_url=None, tags=None, notes=None):
+# the scryfall.csv logic is: name,CMC,Type,Color,Set,Collector Number,Rarity,Color Category,status,Finish,maybeboard,image URL,image Back URL,tags,Notes,MTGO ID
+
+    # print("card_infos = ", card_infos)
+    if finish is None:
+        finish = ""
+    if status is None:
+        status = "Owned"
+    if maybeboard is None:
+        maybeboard = "false"
+    if image_url is None:
+        image_url = ""
+    if image_back_url is None:
+        image_back_url = ""
+    if tags is None:
+        tags = ""
+    if notes is None:
+        notes = ""
+        
+    try:
+        card_infos['mtgo_id']
+    except KeyError:
+        card_infos['mtgo_id'] = ""
+    
+ 
+ 
+
+    cmc = int(card_infos["cmc"])
+    name = '"' + card_infos["name"] +'"'
+    type_line = '"' + card_infos["type_line"].replace('—', '-')  + '"'
+    card_set = '"' + card_infos["set"] + '"'
+    ccn = '"' + card_infos["collector_number"] + '"'
+
+    color_id = "".join(card_infos["color_identity"])
+
+
+    rarity =  card_infos["rarity"]
+    
+    if len(card_infos["color_identity"]) ==1:
+        color_category = [color.lower() for color in card_infos["color_identity"]][0]
+    else:
+        color_category = "m"
+  
+    status = status
+    finish = finish 
+    maybeboard = ""
+    image_url = ""
+    image_Back_URL = ""
+    tags = '"''"'
+    Notes = '"''"'
+    MTGO_ID =  card_infos["mtgo_id"]
+    entry = (name, cmc, type_line, color_id, card_set, ccn, rarity, color_category, status, finish, maybeboard, image_url, tags, Notes, MTGO_ID)
+    # entry =['"' + card_infos["name"]+'"', card_infos["cmc"], '"'+card_infos["type_line"]+'"', card_infos["color_identity"], '"'+card_infos["set"]+'"', card_infos["collector_number"], card_infos["rarity"],   [color.lower() for color in card_infos["color_identity"]],  status, finish, maybeboard, image_url, image_back_url, tags, notes, card_infos["mtgo_id"]] # Lowercase each element
+    title = filename + "_" + card_infos["name"] + "_" + card_infos["collector_number"] + "_" + card_infos["set"] + "_finish: " + finish + "_status: " + status + ".jpg"
+    path = get_path(PathType.RESULTS, title)
+    cv2.imwrite(path, card)
+    return entry
+
+def save_infos(filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, verbose=1, default_action=None):
+    if verbose >0: print(f"Save infos for {filename} in identified_DATETIME.txt")
+    finish = ""
+    status = "Owned"
+    card_data["identified_cards"].append((filename, save_card_infos(card_infos, card, filename, finish=finish, status=status)))
+    card_data["results"].append((filename, finish, status, card_infos))
+
+    return card_data
+    
+def save_infos_foil(filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, verbose=1, default_action=None):
+    if verbose >0: print(f"Save infos for {filename} with finish foil in identified_DATETIME.txt")
+    finish = "Foil"
+    status = "Owned"
+    card_data["identified_cards"].append((filename, save_card_infos(card_infos, card, filename, finish=finish, status=status)))
+    card_data["results"].append((filename, finish, status, card_infos))
+    return card_data
+def save_proxied(filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, verbose=1, default_action=None):
+    if verbose >0: print(f"Save infos for {filename} with status Proxied")
+    finish = ""
+    status = "Proxied"
+    card_data["identified_cards"].append((filename, save_card_infos(card_infos, card, filename, finish=finish, status=status)))
+    card_data["results"].append((filename, finish, status, card_infos))
+    return card_data
+    
+def move_to_unidentified(filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, verbose=1, default_action=None):
+    if verbose >0: print(f"Move {filename} to undidentified_DATETIME.txt")
+    card_data["unidentified_cards"].append(filename)
+    return card_data
+    
+def scrap_image(filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, verbose=1, default_action=None):
+    if verbose >0: print(f"Scrap image for {filename}. {filename} will NOT be moved to undidentified_DATETIME.txt")
+    return card_data
+    
+def define_rois(filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, verbose=1, default_action=None):
+    if verbose >0: print(f"Define ROIs for {filename} and start anew")
+    mtg_ocr_config.set_relative_coordinates(card)
+    move_to_unidentified(filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, verbose, default_action)
+    return card_data
+
+def write_results_files(filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, verbose=1, default_action=None):
+    print("Write files chosen.")
+    path_to_identified_cards = write_results_to_txt(card_data["identified_cards"],"identified_cards")
+    write_results_to_txt(card_data["unidentified_cards"],"unidentified_cards")
+    write_results_to_txt(card_data["results"],"results")
+    write_results_to_csv(path_to_identified_cards)
+    user_cardname_confirmation(filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, verbose, default_action)
+    return card_data
+
+def exit_program(filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, verbose=1, default_action=None):
+    if verbose >0: print("Exiting the program.")
+    cv2.destroyAllWindows()
+    sys.exit()
+
+def checkif_scryfall_file_contains_UI(user_input, filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, verbose = 0, default_action = None):
+    """
+    #  Check if the scryfall file contains 
+    # Return True if the card is found, otherwise return False
+    """
+    try:
+        user_input = str(user_input)
+    
+        pot_sets = re.findall(r'\b[A-Za-z0-9]{3,4}\b', user_input)
+        pot_collector_number = re.findall(r'\b\d+\b', user_input)
+
+        # Add two zeros to the left
+        added_zeros = [number.rjust(len(number) + 2, '0') for number in pot_collector_number]
+        
+        # Remove two zeros from the left, and include variations without leading zeros
+        removed_zeros = [number[1:] if number.startswith('0') else number for number in pot_collector_number]
+        variations = [number for number in pot_collector_number if not number.startswith('0')]
+        
+        # Extend the original list with the results
+        extended_pot_collector_number = pot_collector_number + added_zeros + removed_zeros + variations
+        for card in scryfall_file:
+            for pot_set in pot_sets:
+                for pot_collector_number in extended_pot_collector_number:
+                   if card["set"] == pot_set.lower() and card["collector_number"] == pot_collector_number:
+                        return card
+        return None
+    
+    except ValueError:
+        return None
+    except IndexError:
+        return None

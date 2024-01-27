@@ -55,10 +55,11 @@ parent of
         root.destroy()
         return value
     
+    
+
 
 class MtGOCRData(ConfigHandler):
-    def __init__(self, parameters_file="parameters.txt"):
-        """
+    """
         MtGOCRData file contains the 
       img_storage directory (Default called img_storage) folder
       phone image directory needed if the img get automatically imported from 
@@ -142,15 +143,25 @@ The default values are defining two edges of a rectanlge of the card snippet
   }
     
     
+"""
+    def __init__(self, parameters_file=None, verbose=0):
         """
-        super().__init__(parameters_file)
-        if not os.path.exists(get_path(PathType.CONFIG,self.parameters_file)):
+        MtGOCRData file contains the 
+        img_storage directory (Default called img_storage) folder
+        phone image directory needed if the img get automatically imported from 
+        the phone
+        scryfall file date (now set to update 30 days) so the new expansions get 
+        downloaded or can be downloaded automatically by calling
+        rest of the init method
+        """
+        super().__init__(parameters_file or "parameters.txt")
+        
+        if not os.path.exists(get_path(PathType.CONFIG, self.parameters_file)):
             self.create_default_config()
-
         # self.setup_parameters_file()
         self.load_parameters_config()
-        
-        self.check_scryfall_date()
+        self.check_scryfall_date(verbose)
+
      
     def create_default_config(self): 
         default_config = {
@@ -235,7 +246,7 @@ The default values are defining two edges of a rectanlge of the card snippet
         
         return value
 
-    def check_scryfall_date(self):       
+    def check_scryfall_date(self,verbose =0):       
         """ returns the scryfall date, if too old, new file is donwloaded"""
         # Get the latest scryfall file
         latest_scryfall_file = self.get_latest_scryfall_file()
@@ -510,34 +521,7 @@ The default values are defining two edges of a rectanlge of the card snippet
             print("Define extractino area:")
             
             return None
-    def show_all_rois(self, image, verbose:int = 0):
-        """
-
-        Parameters
-        ----------
-        image : TYPE
-            DESCRIPTION.
-
-        Returns
-        -------
-        None.
-
-        """
-        
-        with open(get_path(PathType.CONFIG, filename), 'r') as file:
-            data = json.load(file)
-                
-        for mode in modes["ui","name","exp"]:
-            if mode in data:
-                
-                return data[mode]
-            else:
-                print("Error, parameters.txt not found or mode not found.")
-                print(" mode: ", mode)
-                
-                print("Define extractino area:")
-                
-             
+            
         
 
 
@@ -556,12 +540,12 @@ The default values are defining two edges of a rectanlge of the card snippet
     def get_set_list(self, verbose = 0):
         filename = "all_sets.json"
         if not os.path.exists(get_path(PathType.CONFIG ,filename)):
-            self.update_set_list(self.open_scryfall_file())
+            self.update_set_list(self.open_scryfall_file(verbose))
                   
         with open(get_path(PathType.CONFIG, filename), 'r', encoding='utf-8') as file:
             all_sets = json.load(file)
             
-        if verbose >0:
+        if verbose > 0:
             print("Loaded all_sets file")
             
         return all_sets
@@ -659,7 +643,7 @@ The default values are defining two edges of a rectanlge of the card snippet
     
    
 
-    def update_scryfall_file(self):
+    def update_scryfall_file(self, verbose =0):
        # Implement your logic for updating the scryfall file here
        # Delete all but the latest scryfall file
     
@@ -678,7 +662,8 @@ The default values are defining two edges of a rectanlge of the card snippet
            download_successful = False
            if response.status_code == 200:
                data = response.json()
-               print("Dowloading new scryfall data. \n Connection to scryfall successful")
+               if verbose >0: 
+                   print("Dowloading new scryfall data. \n Connection to scryfall successful")
                # Loop through the data to find the relevant download link
                for entry in data['data']:
                    if entry['object'] == 'bulk_data' and entry['name'] == 'Default Cards':
@@ -714,13 +699,14 @@ The default values are defining two edges of a rectanlge of the card snippet
                        # List files in the current directory
                        files_in_directory = return_folder_contents(get_path(PathType.CONFIG))
 
-                       print("files_in_directory: ", files_in_directory)
+                       if verbose >2:
+                           print("files_in_directory: ", files_in_directory)
                        # Delete files with a specific extension or criteria
                        for file in files_in_directory:
                            # Delete all files except my all_sets.json as this file
                            if file != filename and file != "all_sets.json":
                                if file.endswith(".json") or file.endswith(".JSON"):
-                                   print(file)
+                                   print("removing old scryfall file", file)
                                    os.remove(file)
         
                        # Updating set list when no bulk data file is available
@@ -826,14 +812,14 @@ class CubeCobraData(ConfigHandler):
 # Example usage
 if __name__ == "__main__":
     # Create an instance of ConfigurationHandler
-    mtg_ocr_config  = MtGOCRData()
+    mtg_ocr_config  = MtGOCRData(verbose = 3)
     print(mtg_ocr_config.get_Mtg_letters())
     # storage_directory = mtg_ocr_config.get_img_directory()
 
-    filename = "IMG_20231222_111834.jpg"   
+    filename = "1.jpg"   
   
     
-    image =cv2.imread(get_path(PathType.RAW_IMAGE, filename))   
+    image =cv2.imread(get_path(PathType.RAW_IMAGE_TEST, filename))   
     mtg_ocr_config.set_relative_coordinates(image)
     
 

@@ -92,24 +92,24 @@ def extract_card(path_to_img, verbose=0):
        # easier contur identification
        image = imutils.resize(original_image, width=300)
     
-    if verbose >=2:
-        cv2.imshow("original image", image)
+    if verbose >2:
+        display_image("original image", image)
     
     # 2) Converting the input image to greyscale
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    if verbose >=2:
-        cv2.imshow("greyed image", gray_image)
+    if verbose >2:
+        display_image("greyed image", gray_image)
      
 
     # 3) Reducing the noise in the greyscale image
     gray_image = cv2.bilateralFilter(gray_image, 11, 17, 17) 
-    if verbose >=2:
-        cv2.imshow("smoothened image", gray_image)
+    if verbose >2:
+        display_image("smoothened image", gray_image)
     
     # 4) Detecting the edges of the smoothened image
     edged = cv2.Canny(gray_image, 25, 200) 
-    if verbose >=2:
-        cv2.imshow("edged image", edged)
+    if verbose >2:
+        display_image("edged image", edged)
         
     
     # 5) Dilate the image to join the edge
@@ -133,53 +133,70 @@ def extract_card(path_to_img, verbose=0):
     # cv2.chain_approx_simple ... and copy only the corners of defining points
     cnts,_ = cv2.findContours(dilated_edges.copy(), cv2.RETR_EXTERNAL, 
                                 cv2.CHAIN_APPROX_SIMPLE)
+    
 
-    if verbose >=2:     # display the contours
+
+    if verbose >1:     # display the contours
         image1=image.copy()
         cv2.drawContours(image1,cnts,-1,(0,255,0),3)
-        cv2.imshow("contours external",image1)
+        display_image("contours external",image1)
         
     # 7) Sorting the identified contours - > getting the contour with the most 
     # area
     cnts_sorted = sorted(cnts, key = cv2.contourArea, reverse = True)[:1]
     screenCnt = None
-    
-    if verbose >= 2:
+
+    cnts_sorted = filter_and_sort_contours(cnts_sorted, image, verbose)
+    filtered_contours = cnts_sorted
+
+    if verbose > 2:
         image2 = image.copy()
-        cnts_top4 = sorted(cnts, key = cv2.contourArea, reverse = True)[:4]
+        cnts_top4 = sorted(filtered_contours, key = cv2.contourArea, reverse = True)[:4]
         cv2.drawContours(image2,cnts_top4,-1,(0,255,0),2)
-        display_image("Top 4 contours",image2)
+        display_image("Top 4 contours filtered",image2)
  
+
+
+
     # 8) convert it to a contour with 4 sides
     for c in cnts_sorted:
         perimeter = cv2.arcLength(c, True)
         approx = cv2.approxPolyDP(c, 0.025 * perimeter, True)
         if len(approx) == 4: 
-            screenCnt = approx      
+            screenCnt = approx
+            
     
     # no contour with 4 sides was found, redo contours by thresshold
     if screenCnt is None:
-        if verbose > 1:
-            print("redo contours by frame threshold")
+        error = "redo contours by frame threshold"
+        return None, error
+    
+        # if verbose > 1:
+        #     print("redo contours by frame threshold")
         
-        frame_threshold = cv2.inRange(image.copy(), (0, 0, 0), (179, 88, 255))
+        # frame_threshold = cv2.inRange(image.copy(), (0, 0, 0), (179, 88, 255))
       
-        # 5) Finding the contours from the edged image
-        cnts,_ = cv2.findContours(frame_threshold, cv2.RETR_EXTERNAL, 
-                                    cv2.CHAIN_APPROX_SIMPLE)
+        # # 5) Finding the contours from the edged image
+        # cnts,_ = cv2.findContours(frame_threshold, cv2.RETR_EXTERNAL, 
+        #                             cv2.CHAIN_APPROX_SIMPLE)
        
-        image1=frame_threshold.copy()
-        cv2.drawContours(image1,cnts,-1,(0,255,0),3)
-        if verbose >=2:
-            cv2.imshow("contours external redone after filter 2",image1)
+     
+        # cnts_sorted = sorted(cnts, key = cv2.contourArea, reverse = True)[:1]
+
+        # cnts = filter_and_sort_contours(cnts_sorted, original_image, verbose=3)
+        # image1=frame_threshold.copy()
+        # cv2.drawContours(image1,cnts,-1,(0,255,0),3)
+        # if verbose >2:
+        #     display_image("contours external redone after filter 2",image1)
            
       
-        # 7) Finding the contour with four sides
-        for c in cnts:
-            perimeter = cv2.arcLength(c, True)
-            approx = cv2.approxPolyDP(c, 0.018 * perimeter, True)
-            if len(approx) == 4: 
-                screenCnt = approx
+        # # 7) Finding the contour with four sides
+        # for c in cnts:
+        #     perimeter = cv2.arcLength(c, True)
+        #     approx = cv2.approxPolyDP(c, 0.018 * perimeter, True)
+        #     if len(approx) == 4: 
+        #         screenCnt = approx
+                
     
     if screenCnt is not None:  # Check if the contour is found
         # Convert screenCnt corners to a usable format for perspective 
@@ -205,11 +222,12 @@ def extract_card(path_to_img, verbose=0):
             print("orginal corners:", original_corners)
             print("type of original corners: ", type( original_corners))
             
+        
         original_corners = corner_points(original_corners)
             
         #Display the are that is extracted from the original image on top
         # of original image      
-        if verbose >= 2:
+        if verbose > 2:
             # Create an empty mask
             masked_image = original_image.copy()
             corners_int32 = np.array(original_corners, dtype=np.int32)
@@ -252,9 +270,14 @@ def extract_card(path_to_img, verbose=0):
         if verbose > 0:
             display_image("Transformed Card Final", result)
 
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-
+        
+        if verbose == 1:
+            cv2.waitKey(1)
+            return result, None
+        else:
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+        
         return result, None
        
     else:
@@ -268,6 +291,87 @@ def extract_card(path_to_img, verbose=0):
         cv2.destroyAllWindows()
         
         return None, error_message
+
+
+
+def filter_and_sort_contours(cnts, original_image, verbose=3):
+    # Result
+    filtered_contours = tuple()
+    
+    # Loop through each contour
+    for contour in cnts:
+        image2 = original_image.copy()
+        # Approximate the contour with a polygon
+        epsilon = 0.02 * cv2.arcLength(contour, True)
+        approx = cv2.approxPolyDP(contour, epsilon, True)
+        cv2.drawContours(image2,approx,-1,(0,255,0),2)
+    
+            # Calculate the centroid (center of mass) of the polygon
+        centroid = np.mean(approx[:, 0, :], axis=0)
+        
+        # Calculate the distance of each point from the centroid
+        distances = np.linalg.norm(approx[:, 0, :] - centroid, axis=1)
+        
+        # Sort the points based on their distances
+        sorted_indices = np.argsort(distances)
+        
+       
+        try:
+            innermost_points = find_innermost_corners(approx)
+        except ZeroDivisionError:
+            return None, "Card cannot touch image corners"
+      
+        # filtered_contours = filter_contours_inside_rectangle(
+        #     [tuple(c + [0]) for c in cnts], innermost_points,image, verbose = 3)
+        if verbose > 2: 
+            display_image("Innermost Corners",  image2)
+            cv2.waitKey(0)
+            
+        # Create a bounding rectangle using the innermost corners
+        reshaped_innermost_points = innermost_points.reshape(4, 2)
+
+        # Result
+        innermost_points = corner_points(reshaped_innermost_points)
+        
+        rect = cv2.boundingRect(innermost_points)
+        x, y, w, h = rect
+        
+        # Draw the bounding rectangle on the original image
+        cv2.rectangle(original_image, (x, y), (x + w, y + h), (255, 0, 0), 3)
+        
+        # Display the image with the bounding rectangle
+        if verbose > 2: 
+            display_image("filter", original_image)
+            cv2.waitKey(0)
+        
+        # Filter contours
+        for c in cnts:
+            # Convert the tuple to a NumPy array
+            c_array = np.array(c)
+            # Filter contour points inside the bounding rectangle
+            inside_points = [np.array([point], dtype=np.int32) for point in c_array[:, 0, :] if x <= point[0] <= x + w and y <= point[1] <= y + h]
+            if inside_points:
+                filtered_contours += (np.array(inside_points),)
+        
+        return filtered_contours
+def find_innermost_corners(cnt):
+    # Compute the moments of the contour
+    M = cv2.moments(cnt)
+
+    # Calculate the centroid
+    cx = int(M["m10"] / M["m00"])
+    cy = int(M["m01"] / M["m00"])
+
+    # Find the four points best matching a rectangle
+    epsilon = 0.02 * cv2.arcLength(cnt, True)
+    corners = cv2.approxPolyDP(cnt, epsilon, True)
+
+    # Sort the corners based on distance from the centroid
+    sorted_corners = sorted(corners, key=lambda point: np.linalg.norm(np.array(point[0]) - np.array([cx, cy])))
+
+    # Return the first 4 points (innermost corners)
+    return np.array(sorted_corners[:4], dtype=np.int32)
+
 
 def display_image(name: str, image, width: int=600):
     """
@@ -295,6 +399,8 @@ def display_image(name: str, image, width: int=600):
     length = int(width * image.shape[0] / image.shape[1])
     cv2.resizeWindow(name, width, length)
     cv2.imshow(name, image)
+    # cv2.waitKey(0)
+    # cv2.waitKey(1)
 
 def corner_points(input_corners):    
     """
@@ -337,21 +443,24 @@ def corner_points(input_corners):
                 corners["bottom_right"] = point         
     # Check if any corner is still None and assign it based on 
     # neighboring corner
-    for corner, value in corners.items():
-        if value is None:
-            if corner == "top_left":
-                corners[corner] = [corners["bottom_left"][0],
-                                   corners["bottom_right"][1]]
-            elif corner == "bottom_left":
-                corners[corner] = [corners["top_right"][0],
-                                   corners["bottom_right"][1]]
-            elif corner == "top_right":
-                corners[corner] = [corners["bottom_right"][0],
-                                   corners["top_left"][1]]
-            elif corner == "bottom_right":
-                corners[corner] = [corners["top_right"][0],
-                                   corners["bottom_left"][1]]
-    # Store corner corners in a list
+    try:
+        for corner, value in corners.items():
+            if value is None:
+                if corner == "top_left":
+                    corners[corner] = [corners["bottom_left"][0],
+                                       corners["bottom_right"][1]]
+                elif corner == "bottom_left":
+                    corners[corner] = [corners["top_right"][0],
+                                       corners["bottom_right"][1]]
+                elif corner == "top_right":
+                    corners[corner] = [corners["bottom_right"][0],
+                                       corners["top_left"][1]]
+                elif corner == "bottom_right":
+                    corners[corner] = [corners["top_right"][0],
+                                       corners["bottom_left"][1]]
+    except TypeError:
+        return None 
+        # Store corner corners in a list
     corners = np.array([
         corners["top_left"],
         corners["top_right"],
@@ -392,5 +501,11 @@ def path_to_img_storage(filename: str, verbose : int = 0):
          print(image_path)
      
      return image_path  
-
-
+ 
+if __name__ == "__main__":
+    filename = "1.jpg"
+    mypath = get_path(PathType.RAW_IMAGE_TEST,filename)
+    card, error = extract_card(mypath, verbose =2)
+    if error:
+        print(error)
+ 

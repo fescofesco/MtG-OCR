@@ -16,9 +16,12 @@ from src.Card_Identification.path_manager import (get_path, PathType)
 
 
 def move_content_to_subfolders(path_to_directory, verbose =0):
+    """
+    Moves the created files to subfolders with DATETIME
+    """
     
   # Check if there are images to be transferred
-    image_files = [file for file in os.listdir(path_to_directory) if file.lower().endswith(('.png', '.jpg', '.jpeg'))]
+    image_files = [file for file in os.listdir(path_to_directory) if file.lower().endswith(('.png', '.jpg', '.jpeg', '.txt','.csv'))]
 
     if not image_files:
         if verbose >0: print("No images to transfer. Exiting.")
