@@ -2,7 +2,7 @@ auto_mix_prep==0.2.0
 colorama==0.4.6
 fuzzywuzzy==0.18.0
 imutils==0.5.4
-numpy==1.25.1
+numpy==1.26.3
 opencv_python==4.8.0.74
 pytesseract==0.3.10
 python_Levenshtein==0.23.0
