@@ -12,7 +12,7 @@ Start by installing the required modules.
 
 Install [pytesseract](https://github.com/UB-Mannheim/tesseract).
 This version was tested with `tesseract-ocr-w64-setup-5.3.3.20231005.exe`.
-Set pytesseract to path `C:/Programm Files(x86)/Tesseract-OCR/`.
+Set pytesseract path to `C:/Programm Files(x86)/Tesseract-OCR/`.
 
  This step is optional:
  To use the `adb` mode, install [adb](https://github.com/google/python-adb) first. Enable debugging on your android device. See [https://developer.android.com/tools/adb](https://developer.android.com/tools/adb) for an explanation on how to enable debugging.
@@ -27,8 +27,8 @@ The suggested mode is `quickstart`.
 
 __Modes__
 * `quickstart` Select the folder where the card images are present. The images are safed to the internal working direction. All already present images will be moved to subfolders with the current DATETIME. Only the selected cards will be processed.
-* `all files`: The images must be safed to `~/git/MtG-OCR/data/Card_Identification/raw_IMGs` beforehand. Then the contents of this folder is processed.
-and all these images are processed. 
+* `all files`: The images must be safed to `~/git/MtG-OCR/data/Card_Identification/raw_IMGs` beforehand. Then the contents of the selected folder is processed within the working directory (`~/git/MtG-OCR/data/Card_Identification/raw_IMGs`).
+All these images are processed. 
 *  `adb`: At program start all images from the folder `MTG-OCR` on the connected android device  are downloaed and transfered _via_ adb to the working directory 
 `~/git/MtG-OCR/data/Card_Identification/raw_IMGs`. All images from the android device are processed. 
 *  `adb-live`: Like adb, but the image contents of the MtG-OCR folder are downloaed continuously and only the newest image is processed. After each processed card a new image needs to be taken. This mode is suited for live analysis.
