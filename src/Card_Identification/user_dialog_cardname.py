@@ -19,12 +19,12 @@ import re
 import colorama
 
 
-from src.Card_Identification.card_extraction import (extract_card, display_image)
-from src.Card_Identification.process_card import (create_rois_from_filename)
-from src.Card_Identification.configuration_handler import MtGOCRData
-from src.Card_Identification.path_manager import (get_path, PathType,return_folder_image_contents)
-from src.Card_Identification.save_results import (write_results_to_txt, write_results_to_csv)
-from src.Card_Identification.copy_img_to_data import (select_and_copy_images_to_data)
+from card_extraction import (extract_card, display_image)
+from process_card import (create_rois_from_filename)
+from configuration_handler import MtGOCRData
+from path_manager import (get_path, PathType,return_folder_image_contents)
+from save_results import (write_results_to_txt, write_results_to_csv)
+from copy_img_to_data import (select_and_copy_images_to_data)
 
 
 def user_cardname_confirmation(filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, verbose=1, default_action=None):

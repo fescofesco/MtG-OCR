@@ -10,13 +10,11 @@ writes the results to a file
 """
 
 
-from src.Card_Identification.path_manager import (get_path, PathType)
 import os 
 import datetime
 import json
 import csv
-from src.Card_Identification.path_manager import (get_path, PathType)
-import json
+from path_manager import (get_path, PathType)
 
 
 def write_results_to_txt(card_names,filename=None, destination_directory=None):

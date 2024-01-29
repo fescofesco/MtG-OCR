@@ -22,9 +22,9 @@ from unittest.mock import patch
 import os
 from pathlib import Path
 
-from src.Card_Identification.path_manager import get_path
-from src.Card_Identification.card_extraction import extract_card
-from src.Card_Identification.path_manager import (PathType,
+from src.card_identification.path_manager import get_path
+from src.card_identification.card_extraction import extract_card
+from src.card_identification.path_manager import (PathType,
 get_path, return_folder_contents
 )
 

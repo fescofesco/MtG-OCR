@@ -12,7 +12,7 @@ import shutil
 from datetime import datetime
 from tkinter import Tk, filedialog
 import os
-from src.Card_Identification.path_manager import (get_path, PathType)
+from path_manager import (get_path, PathType)
 
 
 def move_content_to_subfolders(path_to_directory, verbose =0):

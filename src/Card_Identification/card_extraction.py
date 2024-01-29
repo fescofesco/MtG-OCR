@@ -26,7 +26,8 @@ import os
 import cv2
 import imutils
 import numpy as np
-from src.Card_Identification.path_manager import (get_path, PathType)
+# from src.card_identification.path_manager import (get_path, PathType)
+from path_manager import (get_path, PathType)
 
 def extract_card(path_to_img, verbose=0):
     """

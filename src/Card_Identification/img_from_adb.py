@@ -18,7 +18,7 @@ import subprocess
 import os
 from pathlib import Path
 from datetime import datetime
-from src.Card_Identification.path_manager import (get_path, PathType,return_folder_image_contents)
+from path_manager import (get_path, PathType,return_folder_image_contents)
 
 
 def transfer_images_from_device(source_folder="MTG-OCR", 

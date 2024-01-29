@@ -27,6 +27,7 @@ MtG-OCR
 ├── examples
 │   └─────── example.py
 ├── src
+│   ├── __init__.py
 │   └── Card_Identification
 │       ├────────────────── __init__.py
 │       ├────────────────── main_Card_Identification.py

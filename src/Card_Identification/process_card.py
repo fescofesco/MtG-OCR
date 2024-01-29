@@ -18,9 +18,9 @@ create_rois_from_filename(filename, mtg_ocr_config, card= None, verbose =0):
 """
 import cv2
 import os
-from src.Card_Identification.card_extraction import extract_card
-from src.Card_Identification.configuration_handler import MtGOCRData
-from src.Card_Identification.path_manager import (get_path, PathType)
+from card_extraction import extract_card
+from configuration_handler import MtGOCRData
+from path_manager import (get_path, PathType)
 
 def create_rois_from_filename(filename, mtg_ocr_config, card= None, verbose =0):
     """
@@ -132,7 +132,7 @@ def get_roi(card, coordinates=None, title=None, verbose=1):
      
         roi = card[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]]
     
-        if verbose > 2:
+        if verbose > 3:
             print("title in get roi", title)
             cv2.imshow(title, roi)
             cv2.waitKey(0)

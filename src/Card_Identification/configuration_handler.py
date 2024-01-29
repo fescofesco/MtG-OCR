@@ -18,7 +18,7 @@ import re
 import requests
 from datetime import datetime, timedelta
 import cv2
-from src.Card_Identification.path_manager import (
+from src.card_identification.path_manager import (
     get_path, return_folder_contents, PathType)
 
 

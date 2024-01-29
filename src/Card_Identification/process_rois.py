@@ -50,9 +50,11 @@ from collections import Counter
 import json
 import filecmp
 import numpy as np
+from card_extraction import display_image
 
-from src.Card_Identification.configuration_handler import MtGOCRData
-from src.Card_Identification.path_manager import (get_path, return_folder_contents, PathType)
+
+from configuration_handler import MtGOCRData
+from path_manager import (get_path, return_folder_contents, PathType)
 
 
 def return_cardname_from_ROI(filename, scryfall_all_data, verbose = 0):
@@ -138,7 +140,8 @@ def return_cardname_from_ROI(filename, scryfall_all_data, verbose = 0):
     
       
             # roi_info = preprocess_roi(ui_roi,verbose=0)
-            roi_info =  cv2.bitwise_not(ui_roi)
+            roi_info = ui_roi
+
             pot_collectornumber, pot_set, pot_rarity = extract_set_info(roi_info)
             # pot_collectornumber, pot_set, pot_rarity = extract_set_info(ui_roi)
             if verbose > 2:
@@ -161,6 +164,7 @@ def return_cardname_from_ROI(filename, scryfall_all_data, verbose = 0):
             # Call preprocess_roi function to get relevant information
             # and Apply extract_set_code function
             # roi_info = preprocess_roi(name_roi,verbose)
+            roi_info = name_roi
             potential_letters = MtGOCRData().get_Mtg_letters()
             roi_info = name_roi
             pot_cardname = [''.join(extract_name_info(roi_info, potential_letters, verbose))]
@@ -210,7 +214,7 @@ def remove_specific_characters(list_to_update):
     return updated_list
 
 
-def find_card_by_infos(pot_collector_numbers, pot_sets, pot_rarities, pot_cardnames, scryfall_all_data, verbose=0):
+def find_card_by_infos(pot_collectornumbers, pot_sets, pot_rarities, pot_cardnames, scryfall_all_data, verbose=0):
     """
         Identification of the cardname by the UI unique information provided by
         OCR data.
@@ -234,6 +238,12 @@ def find_card_by_infos(pot_collector_numbers, pot_sets, pot_rarities, pot_cardna
     If the rarity is 'T' (token), it includes cards with a rarity of 'special' or a set name starting with 't'.
     Output:
     """
+    if verbose > 3:
+        print("pot_sets= ",pot_sets)
+        print("pot_collectornumbers= ", pot_collectornumbers)
+        print("pot_rariteis= ",pot_rariteis)
+        print("pot_cardnames= ",pot_cardnames)
+        
     updated_pot_sets=pot_sets.copy()
     updated_pot_rarities = []
     for rarity in pot_rarities:
@@ -243,7 +253,7 @@ def find_card_by_infos(pot_collector_numbers, pot_sets, pot_rarities, pot_cardna
             updated_pot_rarities.append("token")
             for pot_set in pot_sets:
                 if len(pot_set)==3:
-                    pot_set = 't' + pot_set
+                    pot_set = 't' + pot_set.lower()
                     if verbose > 2: print(pot_set)
                     
                     updated_pot_sets.append(pot_set)
@@ -251,46 +261,57 @@ def find_card_by_infos(pot_collector_numbers, pot_sets, pot_rarities, pot_cardna
             updated_pot_rarities.append("uncommon")
         elif rarity == "M":
             updated_pot_rarities.append("mythic")
-            
 
-    # Start by filtering the scryfall_data for "name"
-    possible_cards = []
-    for name in pot_cardnames:
-        for card in scryfall_all_data:
-            if card["name"] == name:
-                possible_cards.append(card)
-
-    # pot_collectornumber_modified = [str(num).zfill(4) for num in pot_collectornumbers]
-    # pot_collectornumbers.extend(pot_collectornumber_modified)
-    # pot_collectornumber_modified = [str(num).zfill(3) for num in pot_collectornumbers]
-    # pot_collectornumbers.extend(pot_collectornumber_modified)
-    pot_collector_numbers_modified = [str(num).lstrip('0') for num in pot_collector_numbers]
-    pot_collector_numbers.extend(pot_collector_numbers_modified)
-    pot_collector_numbers = list(set(pot_collector_numbers))
+        # Start by filtering the scryfall_data for "name"
+        possible_cards = []
+        for name in pot_cardnames:
+            for card in scryfall_all_data:
+                if card["name"] == name:
+                    possible_cards.append(card)
     
-    if possible_cards:
-
-        def custom_sort(card):
-            # Calculate a score based on the Levenshtein distance for the name, set, rarity, and collector number
-            name_dist = levenshtein_distance(card["name"].lower(), " ".join(pot_cardnames).lower())
-            set_dist = levenshtein_distance(card["set"].lower(), " ".join(updated_pot_sets).lower()) * 2
-            rarity_dist = levenshtein_distance(card["rarity"].lower(), " ".join(updated_pot_rarities).lower()) * 2
-            collector_num_dist = 10  # Default value
+    
+        pot_collectornumbers = [str(num).lstrip('0') for num in pot_collectornumbers]
+        print("modified ccn",pot_collectornumbers)
+        pot_collector_numbers = list(set(pot_collectornumbers))
         
-            if pot_collector_numbers:
-                collector_num_dist = levenshtein_distance(card["collector_number"], " ".join(pot_collector_numbers))
         
-            score = name_dist + set_dist + rarity_dist + collector_num_dist
-            return score
-
-        # Sort the possible cards by their score
-        possible_cards.sort(key=custom_sort)
+      
+        
+        for card in possible_cards:
+            best_name_dist = float("inf")
+            best_set_dist = float("inf")
+            best_collector_number_dist = float("inf")
+      
+            for pot_cardname in pot_cardnames:
+                name_dist = levenshtein_distance(card["name"].lower(), pot_cardname.lower())
+                if name_dist < best_name_dist:
+                    best_name_dist = name_dist
+                    best_name = pot_cardname
+      
+            for pot_set in pot_sets:
+                set_dist = levenshtein_distance(card["set"].lower(), pot_set.lower())
+                if set_dist < best_set_dist:
+                    best_set_dist = set_dist
+                    best_set = pot_set
+      
+            if pot_collectornumbers:
+                for pot_collector_number in pot_collectornumbers:
+                    collector_number_dist = levenshtein_distance(card["collector_number"].lower(), pot_collector_number.lower())
+                    if collector_number_dist < best_collector_number_dist:
+                        best_collector_number_dist = collector_number_dist
+                        best_collector_number = pot_collector_number 
+                        # Update the score for the card
+                        card["score"] = (best_name_dist + best_set_dist) * 2 + best_collector_number_dist
+        
+                        # Sort the possible cards by their score
+        possible_cards = sorted(possible_cards, key=lambda card: card["score"])
         best_match = possible_cards[0]
-
         # Return the best matching card
         return best_match, possible_cards
     else:
         return possible_cards[0], possible_cards
+
+
 
 def preprocess_roi(roi, verbose =0):
     """
@@ -336,25 +357,30 @@ def preprocess_roi(roi, verbose =0):
     
    
     if verbose >=2: 
-        cv2.imshow('Cropped Image', cropped_image)
+        # cv2.imshow('Cropped Image', cropped_image)
         cv2.imshow("Original Image", roi)
-        cv2.imshow('Threshed Image', thresh)
+        # cv2.imshow('Threshed Image', thresh)
     
         # Display the result
 
-        cv2.destroyWindow("Cropped Image")
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        # cv2.destroyWindow("Cropped Image")
+        cv2.waitKey(1)
+        # cv2.destroyAllWindows()
     
     return cropped_image
 
 
 
 def extract_set_info(set_code_roi,verbose = 0):
+    gray = cv2.cvtColor(set_code_roi, cv2.COLOR_BGR2GRAY)
+    gray = cv2.bitwise_not(gray)
+    display_image("gray",gray)
+    cv2.waitKey(1)
+
     # Perform OCR to extract text from the set code ROI
     custom_config = r'--oem 3 --psm 6'  # Adjust as needed
 
-    set_code_text = pytesseract.image_to_string(set_code_roi, config=custom_config)
+    set_code_text = pytesseract.image_to_string(gray, config=custom_config)
     # set_code_text = re.sub(r'[^A-Za-z0-9\s]', '', set_code_text1)
 
     # Extracting numbers using regular expression
@@ -403,10 +429,10 @@ def extract_name_info(contour_name_roi, pot_letters, verbose = 0):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     blur = cv2.GaussianBlur(gray, (7,7), 0)
     thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
-    tresh_bw = cv2.bitwise_not(thresh)
+    # tresh_bw = cv2.bitwise_not(gray)
 
-    if verbose >2: 
-        cv2.imshow('Preprocessed Name Info', tresh_bw)
+    if verbose >4: 
+        cv2.imshow('Preprocessed Name Info', gray)
         cv2.waitKey(0)
         cv2.destroyWindow('Preprocessed Name Info')
        
@@ -414,11 +440,11 @@ def extract_name_info(contour_name_roi, pot_letters, verbose = 0):
     utf8_pot_letters = pot_letters.encode('utf-8')
 
     # Prepare the custom configuration for Tesseract OCR using encoded bytes
-    custom_config = r'--oem 3 --psm 5 -c tessedit_char_whitelist=' + \
+    custom_config = r'--oem 3 --psm 6 -c tessedit_char_whitelist=' + \
         utf8_pot_letters.decode('utf-8')
     
-    custom_config = r'-c tessedit_char_whitelist=' + \
-        utf8_pot_letters.decode('utf-8')
+    # custom_config = r'-c tessedit_char_whitelist=' + \
+    #     utf8_pot_letters.decode('utf-8')
         
     # Escape special characters in the config argument
     escaped_chars = ['"', "'", ',', '=', '_']
@@ -426,11 +452,13 @@ def extract_name_info(contour_name_roi, pot_letters, verbose = 0):
         custom_config = custom_config.replace(char, '\\' + char)
 
     # Perform OCR and extract text using the configured whitelist
-    set_code_text = pytesseract.image_to_string(tresh_bw, config=custom_config)
-    set_code_text_default = pytesseract.image_to_string(tresh_bw)
+    set_code_text = pytesseract.image_to_string(gray, config=custom_config)
+    set_code_text_default = pytesseract.image_to_string(gray)
+    set_code_text_default2 = pytesseract.image_to_string(thresh)
+
     if verbose >2:
             print("extract_name_info") 
-            print("custom confing tesseract:", set_code_text)
+            print("custom confing tesseract:", set_code_text_default)
             print("default confing tesseract (currently used):", set_code_text_default)
 
 
@@ -639,64 +667,67 @@ if __name__ == "__main__":
     potential_letters = mtg_ocr_config.get_Mtg_letters()
     scryfall_all_data= mtg_ocr_config.open_scryfall_file()
     
-    # verbose = 0
-    # # Define pytesseract location
-    # pytesseract.pytesseract.tesseract_cmd = \
-    # r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+    verbose = 0
+    # Define pytesseract location
+    pytesseract.pytesseract.tesseract_cmd = \
+    r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
-    # # check if the ROIs need to be constructed with the function process_card
+    # check if the ROIs need to be constructed with the function process_card
     
-    # # from card_identification import extract_card
-    # from process_card import create_rois_from_filename
-    # from card_extraction import extract_card
+    # from card_identification import extract_card
+    from process_card import create_rois_from_filename
+    from card_extraction import extract_card
     
-    # #  Visage of Dread, LCI 
-    # filename = "IMG_20231222_111834.jpg" 
-    # # Food Token ELD
-    # filename = "IMG_20231213_212201.jpg"
+    #  Visage of Dread, LCI 
+    filename = "IMG_20231222_111834.jpg" 
+    # Food Token ELD
+    filename = "IMG_20231213_212201.jpg"
 
        
-    # path = get_path(PathType.RAW_IMAGE, filename,2)
+    path = get_path(PathType.RAW_IMAGE, filename,2)
     
 
-    # # # Directory path where the files are located
-    # # path = storage_directory + "/" + filename        
-    # # print(path)
+    # # Directory path where the files are located
+    # path = storage_directory + "/" + filename        
+    # print(path)
         
    
-    # card, error = extract_card(path,verbose)
-    # if error != None:
-    #     print("error:", error)
+    card, error = extract_card(path,verbose)
+    if error != None:
+        print("error:", error)
      
-    # mtg_ocr_config.set_relative_coordinates(card)
-    # create_rois_from_filename(filename, mtg_ocr_config, card, verbose = 2)
+    mtg_ocr_config.set_relative_coordinates(card)
+    create_rois_from_filename(filename, mtg_ocr_config, card, verbose = 2)
 
-    # # 1 open the mtg scryfall data
-    # # mtg_ocr_config  = MtGOCRData
+    # 1 open the mtg scryfall data
+    # mtg_ocr_config  = MtGOCRData
   
-    # pot_letters = "WdE&Su0\u00e261fF(4O\u00fctkJ\u00f6nZz\u00f1y\u00c9YICNla\\'_ \u00edcjh\u00e19\u00fa\u00e3HX\u0160M\u00e0s7Pp\u00f3\u00fb8v+:\u00e9beq3L-TiVwm?Qx\u00e4\\\"goGDU\u00aeA!K2/rB.),R"
+    pot_letters = "WdE&Su0\u00e261fF(4O\u00fctkJ\u00f6nZz\u00f1y\u00c9YICNla\\'_ \u00edcjh\u00e19\u00fa\u00e3HX\u0160M\u00e0s7Pp\u00f3\u00fb8v+:\u00e9beq3L-TiVwm?Qx\u00e4\\\"goGDU\u00aeA!K2/rB.),R"
 
-    # delete_duplicate_ROIs(filename,verbose)
-    # cardname = return_cardname_from_ROI(filename, scryfall_all_data, verbose =2)
-    # display_cardname(cardname)
-    #Tasigur UMA 117
-    cardname_by_name =['X', 'Lignify', 'Tasigur, the Golden Fang', 'Tasigur, the Golden Fang', 'Tasigur, the Golden Fang'] 
-    pot_sets = ['YLU', '125', 'cor', 'eee', 'rKI', 'See', 'Bea', 'NIi', 'Iic', '4RA', '117', 'OEE', 'Eei', 'AEN', 'RYL', 'nca', 'orK', 'ENh', '254', 'ERS', 'R4U', 'ERY', 'RUM', 'Ico', 'LUK', 'SOM', 'IER', 'KIE', 'MAE'] 
-    pot_rarities = ['U', 'M', 'R'] 
-    pot_collectornumbers = ['1', '4', '117', '254']
+    delete_duplicate_ROIs(filename,verbose)
+    cardname = return_cardname_from_ROI(filename, scryfall_all_data, verbose =2)
+    display_cardname(cardname)
+ 
     
     
     cardname_by_name = ['X', 'Murderous Cut', 'Cut // Ribbons', 'Murderous Cut', 'Murderous Cut'] 
     cardname_by_name = set(list(cardname_by_name))
+    
+
     pot_sets = ['Ser', 'IOR', 'OAN', '812', 'NNS', 'VUT', 'ale', 'CHE', 'KTK', 'ACZ', 'SEG', '69U', 'NSC', '081', 'HEP', 'NAN', 'ENt', 'KEN', 's09', 'JOI', 'PAC', 'OHA', 'HAN', 'sOM', '269', 'eYO', 'ae0', 'UKT', 'teY']
     pot_rarities = ['U', 'R', 'T', 'C', 'M']
+    # cardname_by_name = ['Food']
+
+    pot_sets = ['Ser', 'IOR', 'OAN', '812', 'NNS', 'VUT', 'ale', 'CHE', 'KTK', 'ACZ', 'SEG', '69U', 'NSC', '081', 'HEP', 'NAN', 'ENt', 'KEN', 's09', 'JOI', 'PAC', 'OHA', 'HAN', 'sOM', '269', 'eYO', 'ae0', 'UKT', 'teY']
+    # pot_sets = ['eld']
+    
     pot_collectornumbers = ['269', '081', '09']
     filepath= r"C:\Users\unisp\Documents\Infoprojekte\MtG-OCR\data\Card_Identification\raw_IMGs\tests\IMG_20240125_193830.jpg"
 
     best_match, possible_cards = find_card_by_infos(pot_collectornumbers, pot_sets, pot_rarities, cardname_by_name, scryfall_all_data, verbose=0)
 
     for card in possible_cards:
-        print(card["name"], card["collector_number"])
+        print(card["name"], card["collector_number"],card["set"])
     
     
             
