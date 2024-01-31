@@ -266,7 +266,7 @@ The default values are defining two edges of a rectanlge of the card snippet
              self.save_config()
          
         else:
-            print("lates file is none")
+            print("No scryfall file found downloading new one.")
             self.update_scryfall_file()
           
                  

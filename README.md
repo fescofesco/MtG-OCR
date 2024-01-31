@@ -19,19 +19,8 @@ Set pytesseract path to `C:/Programm Files(x86)/Tesseract-OCR/`.
  Prepare a folder named `MTG-OCR` on your android device and safe card images there.
 
 The package is not uploaded to pip yet. The modules cannot be imported via the package path, yet.
-'''
-python
-from src.card_identificationcard_extraction import (extract_card)
 
-The setup.cfg file is not yet in the correct configuration to enable
 
-```text
-  pip install -e 
-  
-```
-
-from the root 
-`~/git/MtG-OCR`, yet.
 
 # Workflow
 
