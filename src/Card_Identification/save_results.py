@@ -13,7 +13,6 @@ writes the results to a file
 import os 
 import datetime
 import json
-import csv
 from path_manager import (get_path, PathType)
 
 
@@ -70,7 +69,6 @@ def write_results_to_csv(identified_cards_path, filename=None, destination_direc
     # Open the CSV file and write the data
     with open(path, 'w', newline='') as csv_file:
         # csv_writer = csv.writer(csv_file, quoting=csv.QUOTE_NONE, escapechar='')
-        csv_writer = csv.writer(csv_file)
         csv_file.write(header + '\n')
         for line in data:
             entry_str = ','.join([str(field) for field in line])

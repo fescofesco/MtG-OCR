@@ -18,8 +18,10 @@ import re
 import requests
 from datetime import datetime, timedelta
 import cv2
-from src.card_identification.path_manager import (
-    get_path, return_folder_contents, PathType)
+from path_manager import (get_path, return_folder_contents, PathType)
+
+# from src.card_identification.path_manager import (
+#     get_path, return_folder_contents, PathType)
 
 
 class ConfigHandler:
@@ -155,7 +157,6 @@ The default values are defining two edges of a rectanlge of the card snippet
         rest of the init method
         """
         super().__init__(parameters_file or "parameters.txt")
-        
         if not os.path.exists(get_path(PathType.CONFIG, self.parameters_file)):
             self.create_default_config()
         # self.setup_parameters_file()
@@ -590,6 +591,7 @@ The default values are defining two edges of a rectanlge of the card snippet
             json.dump(result_list, f, indent=0)
 
     def open_scryfall_file(self, verbose=0):
+        self.check_scryfall_date(verbose)
         if verbose >0: print("opening scryfall file")
         files_in_directory = return_folder_contents(get_path(PathType.CONFIG))
         self.delete_old_scryfall_files()

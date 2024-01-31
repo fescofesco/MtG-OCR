@@ -27,8 +27,7 @@ MtG-OCR
 ├── examples
 │   └─────── example.py
 ├── src
-│   ├── __init__.py
-│   └── Card_Identification
+│   └── 
 │       ├────────────────── __init__.py
 │       ├────────────────── main_Card_Identification.py
 │       ├────────────────── configuration_handler.py
@@ -38,11 +37,12 @@ MtG-OCR
 │       ├────────────────── img_from_adb.py
 │       └────────────────── path_manager.py
 ├── tests
-│   ├── Card_Identification
+│   ├── tests_card_identification
 │   │   ├────────────────── __init__.py
+│   │   ├──────────────────test_card_extraction.py
 │   │   └──────────────────test_path_manager.py
 │   └── data
-│       └── Card_Identification
+│       └── card_identification
 │           ├────────────────── raw_IMGs
 │           │                   └─ 2023-12-24
 │           ├────────────────── processed_ROIs
@@ -69,12 +69,17 @@ import cv2
 class PathType(Enum):
     BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-    RESULTS = str(BASE_DIR / 'data' / 'Card_Identification' / 'results')
-    RAW_IMAGE = str(BASE_DIR / 'data' / 'Card_Identification' / 'raw_IMGs')
-    RAW_IMAGE_TEST = str(BASE_DIR / 'tests'/ 'data' / 'Card_Identification' / 'raw_IMGs')
-    PROCESSED_ROI = str(BASE_DIR / 'data' / 'Card_Identification' / 'processed_ROIs')
-    FINAL_ROI = str(BASE_DIR / 'data' / 'Card_Identification' / 'final_ROIs')
-    CONFIG = str(BASE_DIR / 'data' / 'Card_Identification' / 'config')
+    RESULTS = str(BASE_DIR / 'data' / 'card_identification' / 'results')
+    RAW_IMAGE = str(BASE_DIR / 'data' / 'card_identification' / 'raw_IMGs')
+    PROCESSED_ROI = str(BASE_DIR / 'data' / 'card_identification' / 'processed_ROIs')
+    FINAL_ROI = str(BASE_DIR / 'data' / 'card_identification' / 'final_ROIs')
+    CONFIG = str(BASE_DIR / 'data' / 'card_identification' / 'config')
+
+    TEST_RESULTS = str(BASE_DIR / 'tests'/ 'data' / 'card_identification' / 'results')
+    TEST_RAW_IMAGE = str(BASE_DIR / 'tests'/ 'data' / 'card_identification' / 'raw_IMGs')
+    TEST_PROCESSED_ROI = str(BASE_DIR /'tests'/  'data' / 'card_identification' / 'processed_ROIs')
+    TEST_FINAL_ROI = str(BASE_DIR / 'data' /'tests'/  'card_identification' / 'final_ROIs')
+    TEST_CONFIG = str(BASE_DIR / 'data' / 'tests'/ 'card_identification' / 'config')
 
 def get_path(path_type: PathType = None, file_name: str = None, verbose: int = 0):
     """
@@ -100,24 +105,24 @@ def get_path(path_type: PathType = None, file_name: str = None, verbose: int = 0
         str: Path to the folder. If filename is given, the returned path includes the filename.
              If the filename is not given, the fodlder contents are returned.
     """
+
     if path_type is None:
         print("Provide a valid path_type or a custom path.")
         return None
 
-    elif isinstance(path_type, PathType):
+    # elif isinstance(path_type, PathType):
+    try:
         directory_path = path_type.value
-    elif isinstance(path_type, str):
-        if os.path.isabs(path_type):
-                directory_path = path_type
-        else:
-            # print(absolute_path)
-            absolute_path = str(PathType.BASE_DIR / path_type)
-            directory_path = absolute_path
-    else:
-        print("path type:", path_type)
-        print("Provide a valid path_type or a custom path.")
-        return None
-    
+    except TypeError:
+        
+        if isinstance(path_type, str):
+            if os.path.isabs(path_type):
+                    directory_path = path_type
+            else:
+                # print(absolute_path)
+                absolute_path = str(PathType.BASE_DIR / path_type)
+                directory_path = absolute_path
+
     # Create directory if it does not exist
     if not os.path.exists(directory_path):
         os.makedirs(directory_path)
@@ -181,5 +186,5 @@ if __name__ == "__main__":
     print(return_folder_contents(get_path(PathType.PROCESSED_ROI)))
     print(return_folder_contents(get_path(PathType.FINAL_ROI)))
     print(return_folder_image_contents(get_path(PathType.RAW_IMAGE)))
-    print(return_folder_image_contents(get_path(PathType.RAW_IMAGE_TEST)))
+    print(return_folder_image_contents(get_path(PathType.TEST_RAW_IMAGE)))
 

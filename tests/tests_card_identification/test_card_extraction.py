@@ -20,30 +20,25 @@ Main function is
 import unittest
 from unittest.mock import patch
 import os
-from pathlib import Path
+import sys
 
-from src.card_identification.path_manager import get_path
-from src.card_identification.card_extraction import extract_card
-from src.card_identification.path_manager import (PathType,
-get_path, return_folder_contents
-)
-
+# from card_identification.card_extraction import extract_card # does not work
+# card_identification is currently not recognised as an module
+root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'card_identification'))
+sys.path.append(root_path)
 
 
-class PathType():
-    BASE_DIR = Path(__file__).resolve().parent.parent.parent
-    RESULTS = str(BASE_DIR /'tests' / 'data' / 'Card_Identification' / 'results')
-    RAW_IMAGE = str(BASE_DIR /'tests' / 'data' / 'Card_Identification' / 'raw_IMGs')
-    PROCESSED_ROI = str(BASE_DIR / 'tests' /'data' / 'Card_Identification' / 'processed_ROIs')
-    FINAL_ROI = str(BASE_DIR /'tests' / 'data' / 'Card_Identification' / 'final_ROIs')
-    CONFIG = str(BASE_DIR /'tests' /  'data' /'Card_Identification' / 'config')
+# Now you can import your modules
+from card_extraction import extract_card
+from path_manager import (get_path, return_folder_contents)
+from test_path_manager import PathType
 
 
 
-@patch('src.Card_Identification.path_manager.PathType', PathType)    
+
+@patch('path_manager.PathType', PathType)
 class TestIdentifyCard(unittest.TestCase):
     
-
     def test_raw_image_contents(self):
         # check if folder contains the right images
         path_to_test_folder = get_path(PathType.RAW_IMAGE,verbose =0)

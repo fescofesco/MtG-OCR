@@ -1,6 +1,6 @@
 # [MtG-OCR](https://github.com/fescofesco)
 This program identifies [Magic the Gathering (MtG)](https://magic.wizards.com/en) cards from images by optical-character-recognition (OCR) _via_ [pytesseract](https://github.com/UB-Mannheim/tesseract).
-The cards are safed as a [cubecobra](www.cubecobra.com) cube file in `~/git/MtG-OCR/data/Card_Identification/results\CubeCobra_DATETIME.csv`. 
+The cards are safed as a [cubecobra](www.cubecobra.com) cube file in `~/git/MtG-OCR/data/Card_Identification/results/CubeCobra_DATETIME.csv`. 
 The program requires one card per image. The card may not project out of the image.
 # Setup 
 
@@ -17,6 +17,21 @@ Set pytesseract path to `C:/Programm Files(x86)/Tesseract-OCR/`.
  This step is optional:
  To use the `adb` mode, install [adb](https://github.com/google/python-adb) first. Enable debugging on your android device. See [https://developer.android.com/tools/adb](https://developer.android.com/tools/adb) for an explanation on how to enable debugging.
  Prepare a folder named `MTG-OCR` on your android device and safe card images there.
+
+The package is not uploaded to pip yet. The modules cannot be imported via the package path, yet.
+'''
+python
+from src.card_identificationcard_extraction import (extract_card)
+
+The setup.cfg file is not yet in the correct configuration to enable
+
+```text
+  pip install -e 
+  
+```
+
+from the root 
+`~/git/MtG-OCR`, yet.
 
 # Workflow
 

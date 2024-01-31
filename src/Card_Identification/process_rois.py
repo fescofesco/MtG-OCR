@@ -46,13 +46,12 @@ import cv2
 from Levenshtein import distance as levenshtein_distance
 import os
 import re
-from collections import Counter
 import json
 import filecmp
 import numpy as np
 from card_extraction import display_image
-
-
+from process_card import create_rois_from_filename
+from card_extraction import extract_card
 from configuration_handler import MtGOCRData
 from path_manager import (get_path, return_folder_contents, PathType)
 
@@ -110,9 +109,7 @@ def return_cardname_from_ROI(filename, scryfall_all_data, verbose = 0):
     
     if filename.endswith(".jpg"): filename = filename.strip(".jpg")
        
-    roi_directory = get_path(PathType.PROCESSED_ROI)
-    # Get the current working directory
-   
+  
     
     # collect all potential (pot) collectornumbers, sets, rarities, cardnames
     pot_collectornumbers = []
@@ -241,7 +238,7 @@ def find_card_by_infos(pot_collectornumbers, pot_sets, pot_rarities, pot_cardnam
     if verbose > 3:
         print("pot_sets= ",pot_sets)
         print("pot_collectornumbers= ", pot_collectornumbers)
-        print("pot_rariteis= ",pot_rariteis)
+        print("pot_rariteis= ",pot_rarities)
         print("pot_cardnames= ",pot_cardnames)
         
     updated_pot_sets=pot_sets.copy()
@@ -272,7 +269,7 @@ def find_card_by_infos(pot_collectornumbers, pot_sets, pot_rarities, pot_cardnam
     
         pot_collectornumbers = [str(num).lstrip('0') for num in pot_collectornumbers]
         print("modified ccn",pot_collectornumbers)
-        pot_collector_numbers = list(set(pot_collectornumbers))
+        pot_collectornumbers = list(set(pot_collectornumbers))
         
         
       
@@ -286,22 +283,22 @@ def find_card_by_infos(pot_collectornumbers, pot_sets, pot_rarities, pot_cardnam
                 name_dist = levenshtein_distance(card["name"].lower(), pot_cardname.lower())
                 if name_dist < best_name_dist:
                     best_name_dist = name_dist
-                    best_name = pot_cardname
+                    # best_name = pot_cardname
       
             for pot_set in pot_sets:
                 set_dist = levenshtein_distance(card["set"].lower(), pot_set.lower())
                 if set_dist < best_set_dist:
                     best_set_dist = set_dist
-                    best_set = pot_set
+                    # best_set = pot_set
       
             if pot_collectornumbers:
                 for pot_collector_number in pot_collectornumbers:
                     collector_number_dist = levenshtein_distance(card["collector_number"].lower(), pot_collector_number.lower())
                     if collector_number_dist < best_collector_number_dist:
                         best_collector_number_dist = collector_number_dist
-                        best_collector_number = pot_collector_number 
-                        # Update the score for the card
-                        card["score"] = (best_name_dist + best_set_dist) * 2 + best_collector_number_dist
+                                               # Update the score for the card
+                        
+            card["score"] = (best_name_dist + best_set_dist) * 2 + best_collector_number_dist
         
                         # Sort the possible cards by their score
         possible_cards = sorted(possible_cards, key=lambda card: card["score"])
@@ -458,7 +455,7 @@ def extract_name_info(contour_name_roi, pot_letters, verbose = 0):
 
     if verbose >2:
             print("extract_name_info") 
-            print("custom confing tesseract:", set_code_text_default)
+            print("custom confing tesseract tresh:", set_code_text_default2)
             print("default confing tesseract (currently used):", set_code_text_default)
 
 
@@ -672,26 +669,13 @@ if __name__ == "__main__":
     pytesseract.pytesseract.tesseract_cmd = \
     r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
-    # check if the ROIs need to be constructed with the function process_card
-    
-    # from card_identification import extract_card
-    from process_card import create_rois_from_filename
-    from card_extraction import extract_card
-    
     #  Visage of Dread, LCI 
-    filename = "IMG_20231222_111834.jpg" 
+    filename = "1.jpg" 
     # Food Token ELD
-    filename = "IMG_20231213_212201.jpg"
-
-       
-    path = get_path(PathType.RAW_IMAGE, filename,2)
+    #goblin from TRGN 
+    filename = "2.jpg"
+    path = get_path(PathType.TEST_RAW_IMAGE, filename)
     
-
-    # # Directory path where the files are located
-    # path = storage_directory + "/" + filename        
-    # print(path)
-        
-   
     card, error = extract_card(path,verbose)
     if error != None:
         print("error:", error)
@@ -699,10 +683,6 @@ if __name__ == "__main__":
     mtg_ocr_config.set_relative_coordinates(card)
     create_rois_from_filename(filename, mtg_ocr_config, card, verbose = 2)
 
-    # 1 open the mtg scryfall data
-    # mtg_ocr_config  = MtGOCRData
-  
-    pot_letters = "WdE&Su0\u00e261fF(4O\u00fctkJ\u00f6nZz\u00f1y\u00c9YICNla\\'_ \u00edcjh\u00e19\u00fa\u00e3HX\u0160M\u00e0s7Pp\u00f3\u00fb8v+:\u00e9beq3L-TiVwm?Qx\u00e4\\\"goGDU\u00aeA!K2/rB.),R"
 
     delete_duplicate_ROIs(filename,verbose)
     cardname = return_cardname_from_ROI(filename, scryfall_all_data, verbose =2)
@@ -710,24 +690,7 @@ if __name__ == "__main__":
  
     
     
-    cardname_by_name = ['X', 'Murderous Cut', 'Cut // Ribbons', 'Murderous Cut', 'Murderous Cut'] 
-    cardname_by_name = set(list(cardname_by_name))
-    
 
-    pot_sets = ['Ser', 'IOR', 'OAN', '812', 'NNS', 'VUT', 'ale', 'CHE', 'KTK', 'ACZ', 'SEG', '69U', 'NSC', '081', 'HEP', 'NAN', 'ENt', 'KEN', 's09', 'JOI', 'PAC', 'OHA', 'HAN', 'sOM', '269', 'eYO', 'ae0', 'UKT', 'teY']
-    pot_rarities = ['U', 'R', 'T', 'C', 'M']
-    # cardname_by_name = ['Food']
-
-    pot_sets = ['Ser', 'IOR', 'OAN', '812', 'NNS', 'VUT', 'ale', 'CHE', 'KTK', 'ACZ', 'SEG', '69U', 'NSC', '081', 'HEP', 'NAN', 'ENt', 'KEN', 's09', 'JOI', 'PAC', 'OHA', 'HAN', 'sOM', '269', 'eYO', 'ae0', 'UKT', 'teY']
-    # pot_sets = ['eld']
-    
-    pot_collectornumbers = ['269', '081', '09']
-    filepath= r"C:\Users\unisp\Documents\Infoprojekte\MtG-OCR\data\Card_Identification\raw_IMGs\tests\IMG_20240125_193830.jpg"
-
-    best_match, possible_cards = find_card_by_infos(pot_collectornumbers, pot_sets, pot_rarities, cardname_by_name, scryfall_all_data, verbose=0)
-
-    for card in possible_cards:
-        print(card["name"], card["collector_number"],card["set"])
     
     
             

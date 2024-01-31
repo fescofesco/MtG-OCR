@@ -26,8 +26,8 @@ import os
 import cv2
 import imutils
 import numpy as np
-# from src.card_identification.path_manager import (get_path, PathType)
 from path_manager import (get_path, PathType)
+
 
 def extract_card(path_to_img, verbose=0):
     """
@@ -82,6 +82,8 @@ def extract_card(path_to_img, verbose=0):
         
     original_image = cv2.imread(full_path)
     
+    filename = os.path.basename(full_path)
+    
     if original_image is None:
         error_message = "Image not loaded. Check the image path"
         if verbose >0: print(error_message)
@@ -94,23 +96,23 @@ def extract_card(path_to_img, verbose=0):
        image = imutils.resize(original_image, width=300)
     
     if verbose >2:
-        display_image("original image", image)
+        display_image(f"{filename} original image", image)
     
     # 2) Converting the input image to greyscale
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     if verbose >2:
-        display_image("greyed image", gray_image)
+        display_image(f"{filename} greyed image", gray_image)
      
 
     # 3) Reducing the noise in the greyscale image
     gray_image = cv2.bilateralFilter(gray_image, 11, 17, 17) 
     if verbose >2:
-        display_image("smoothened image", gray_image)
+        display_image(f"{filename} smoothened image", gray_image)
     
     # 4) Detecting the edges of the smoothened image
     edged = cv2.Canny(gray_image, 25, 200) 
     if verbose >2:
-        display_image("edged image", edged)
+        display_image(f"{filename} edged image", edged)
         
     
     # 5) Dilate the image to join the edge
@@ -269,7 +271,7 @@ def extract_card(path_to_img, verbose=0):
         result = cv2.warpPerspective(original_image, matrix, 
                                      (target_width, target_height))
         if verbose > 0:
-            display_image("Transformed Card Final", result)
+            display_image(f"{filename} Transformed Card Final", result)
 
         
         if verbose == 1:
@@ -307,16 +309,7 @@ def filter_and_sort_contours(cnts, original_image, verbose=3):
         approx = cv2.approxPolyDP(contour, epsilon, True)
         cv2.drawContours(image2,approx,-1,(0,255,0),2)
     
-            # Calculate the centroid (center of mass) of the polygon
-        centroid = np.mean(approx[:, 0, :], axis=0)
-        
-        # Calculate the distance of each point from the centroid
-        distances = np.linalg.norm(approx[:, 0, :] - centroid, axis=1)
-        
-        # Sort the points based on their distances
-        sorted_indices = np.argsort(distances)
-        
-       
+         
         try:
             innermost_points = find_innermost_corners(approx)
         except ZeroDivisionError:
@@ -505,7 +498,7 @@ def path_to_img_storage(filename: str, verbose : int = 0):
  
 if __name__ == "__main__":
     filename = "1.jpg"
-    mypath = get_path(PathType.RAW_IMAGE_TEST,filename)
+    mypath = get_path(PathType.TEST_RAW_IMAGE,filename)
     card, error = extract_card(mypath, verbose =2)
     if error:
         print(error)

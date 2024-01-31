@@ -22,17 +22,6 @@ from save_results import (write_results_to_txt, write_results_to_csv)
 from copy_img_to_data import (select_and_copy_images_to_data,move_content_to_subfolders)
 from user_dialog_cardname import user_cardname_confirmation
 
-# from src.card_identificationimg_from_adb import transfer_images_from_device
-# from src.card_identificationcard_extraction import (extract_card)
-# from src.card_identificationprocess_card import (create_rois_from_filename)
-# from src.card_identificationprocess_rois import (return_cardname_from_ROI)
-# from src.card_identificationconfiguration_handler import MtGOCRData
-# from src.card_identificationpath_manager import (get_path, PathType,return_folder_image_contents)
-# from src.card_identificationsave_results import (write_results_to_txt, write_results_to_csv)
-# from src.card_identificationcopy_img_to_data import (select_and_copy_images_to_data,move_content_to_subfolders)
-# from src.card_identificationuser_dialog_cardname import user_cardname_confirmation
-
-
 def main_Card_Identification(mode:str = None, verbose =None):
     """
 
@@ -100,11 +89,11 @@ def main_Card_Identification(mode:str = None, verbose =None):
     elif mode == "adb":
         transfer_images_from_device(source_folder="MTG-OCR")
         all_images = return_folder_image_contents(get_path(PathType.RAW_IMAGE))
-
+       
+        
     elif mode == "all_images":
         all_images = return_folder_image_contents(get_path(PathType.RAW_IMAGE))
-        if all_images ==[]:
-            return None
+    
         
     elif mode == "adb-live":
         filename = get_newest_image(get_path(PathType.RAW_IMAGE))
@@ -141,6 +130,9 @@ def main_Card_Identification(mode:str = None, verbose =None):
                    print(f"File '{filename}' does not exist. Skipping card extraction.")
         
     else:
+        if all_images ==[]:
+            print("No images found in ",get_path(PathType.RAW_IMAGE), " exiting program.")
+            return None
         
         while len(all_images) > 0:
             for filename in all_images:
