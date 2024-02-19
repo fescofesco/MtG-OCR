@@ -19,6 +19,7 @@ import requests
 from datetime import datetime, timedelta
 import cv2
 from path_manager import (get_path, return_folder_contents, PathType)
+from card_extraction import extract_card
 
 # from src.card_identification.path_manager import (
 #     get_path, return_folder_contents, PathType)
@@ -164,23 +165,54 @@ The default values are defining two edges of a rectanlge of the card snippet
         self.check_scryfall_date(verbose)
 
      
+
     def create_default_config(self): 
         default_config = {
         "phone_IMG_directory": None,
         "scryfall_file_date": "2024-01-11 22:05:17",
+        
         "ui":[
-            [[0.067, 0.906],[0.4509, 0.97]]
+      #       [[
+      #   0.05841121495327103,
+      #   0.8983333333333333],
+      # [
+      #   0.4766355140186916,
+      #   0.985
+      #  ]],
+      #   [[0.016355140186915886, 0.8833333333333333], [0.3014018691588785, 0.99]]
+      #   ],
+          [[0.0, 0.893],[0.442,0.992]],
+          [[0.016355140186915886, 0.883333333], [0.3014015, 0.99]]
+                 
+             
+    
+        ],
+      
+        "exp":[ [[0.016355140186915886, 0.883333333], [0.3014015, 0.99]],
+               [[0.502, 0.248], [0.991, 0.725]]
+               
             ],
-        "exp": [
-            [[0.8224, 0.6733],[0.9135, 0.723]],
-            [[0.7943, 0.5633],[0.9275, 0.62833]],
-            [[0.7757, 0.7916],[0.9204, 0.86166]]
-           ],
-        "name": [
-            [[0.20093, 0.095],[0.58411, 0.1467]],
-            [[0.3434, 0.06], [0.621, 0.1333]],
-            [[0.0983, 0.086], [0.9156, 0.13666]]
+        "name": 
+            [
+            # [
+            # [[0.028037383177570093, 0.011666666666666667], [0.9906542056074766, 0.20833333333333334]],
+            # [[0.007009345794392523, 0.0033333333333333335], [0.8317757009345794, 0.13333333333333333]]
+            # ],
+            [[0.007, 0.01],[0.993,0.213]],
             ],
+         # "ui":[
+      #       [[0.067, 0.906],[0.4509, 0.97]]^
+      #       ],
+        # "exp": [
+        #     [[0.8224, 0.6733],[0.9135, 0.723]],
+        #     [[0.7943, 0.5633],[0.9275, 0.62833]],
+        #     [[0.7757, 0.7916],[0.9204, 0.86166]]
+        #    ],
+        # "name": [
+        #     [[0.20093, 0.095],[0.58411, 0.1467]],
+        #     [[0.3434, 0.06], [0.621, 0.1333]],
+        #     [[0.0983, 0.086], [0.9156, 0.13666]]
+        #     ],
           "Mtg_letters": "[\u00ae\u00e0\u00e3c\u0160\u00faezO_C\\\")0bI(+ri:?!aLHXkSGdxtN\u00e19\u00f1lwAqgM\u00e2PUno\u00fcjJs\u00e9WpZ&\u00e4Vh\u00f3v3-\u00f6Ey\u00ed.B4K\u00fb,8FRm1f6/Q\\'\u00c9DT2u Y7]"
         }  
         self.parameters_config = default_config      
@@ -436,8 +468,8 @@ The default values are defining two edges of a rectanlge of the card snippet
                         (p[0] / param['width'], p[1] / param['height']) for p in points
                     ]  # Calculate relative coordinates
                     
-                    top_left = (min(relative_coordinates[0][0], relative_coordinates[1][0]), min(relative_coordinates[0][1], relative_coordinates[1][1]))
-                    bottom_right = (max(relative_coordinates[0][0], relative_coordinates[1][0]), max(relative_coordinates[0][1], relative_coordinates[1][1]))
+                    top_left = (round(min(relative_coordinates[0][0], relative_coordinates[1][0]),3), round(min(relative_coordinates[0][1], relative_coordinates[1][1]),3))
+                    bottom_right = (round(max(relative_coordinates[0][0], relative_coordinates[1][0]),3), round(max(relative_coordinates[0][1], relative_coordinates[1][1]),3))
                     
                     coordinates = [top_left, bottom_right]
                     if verbose >2: print("coordinates", coordinates)
@@ -477,19 +509,20 @@ The default values are defining two edges of a rectanlge of the card snippet
         y_coordinate = top_left[0]
         x_coordinate = top_left[1]
         
-        if x_coordinate >= 0.7:
-            return "exp"
+        # if x_coordinate >= 0.7:
+        #     return "exp"
         
         if 0 <= y_coordinate <= 0.35:
             return 'name'
-        elif 0.36 <= y_coordinate <= 0.7:
+        elif 0.36 <= y_coordinate <= 0.7 and x_coordinate >= 0.5:
             return 'exp'
-        elif 0.71 <= y_coordinate <= 1:
+        elif 0.71 <= y_coordinate <= 1 :
             return 'ui'
         else:
+            
             print("determine_mode in process_card.py: wrong mode submitted \
                   to determine_mode")
-            return 'unknown'    
+            return 'ui'
         
     def get_coordinates_from_file(self, mode, verbose:int=0):
         """
@@ -818,11 +851,13 @@ if __name__ == "__main__":
     print(mtg_ocr_config.get_Mtg_letters())
     # storage_directory = mtg_ocr_config.get_img_directory()
 
-    filename = "1.jpg"   
-  
+    # filename = "1.jpg"   
+    filename = "5.jpg"   
     
-    image =cv2.imread(get_path(PathType.RAW_IMAGE_TEST, filename))   
-    mtg_ocr_config.set_relative_coordinates(image)
+  
+    image, error= extract_card(get_path(PathType.TEST_RAW_IMAGE, filename),3)
+    # image =cv2.imread(get_path(PathType.TEST_RAW_IMAGE, filename))   
+    mtg_ocr_config.set_relative_coordinates(image,verbose=3)
     
 
     CubeData = CubeCobraData()
@@ -847,3 +882,5 @@ if __name__ == "__main__":
     print(mtg_ocr_config.get_coordinates_from_file("exp"))
     print("name")
     print(mtg_ocr_config.get_coordinates_from_file("name"))
+    
+

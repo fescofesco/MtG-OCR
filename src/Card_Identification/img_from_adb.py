@@ -70,7 +70,7 @@ def transfer_images_from_device(source_folder="MTG-OCR",
         print("Device is not connected.")
         return None
 
-    print(source_folder)
+    if verbose > 2: print(source_folder)
     if os.path.exists(source_folder):
         source_directory = source_folder
         if verbose > 2: print(f"Using provided source folder: {source_directory}")
@@ -81,22 +81,40 @@ def transfer_images_from_device(source_folder="MTG-OCR",
         # Execute the ADB command and capture the output
         result = subprocess.run(adb_command, shell=True,
                                 capture_output=True, text=True)
-    
-        # Check if the command was successful and process the output
+        
+        # # Check if the command was successful and process the output
+        # if result.returncode == 0:
+            
+        #     output = result.stdout.strip()
+     
+        
+        #     if verbose > 2:
+        #         if output:
+        #             print(f"Folder '{source_folder}' found at:")
+        #             print(output)
+        #         else:
+        #             print(f"Folder '{source_folder}' not found on the device.")
+        #             return  # Exit the function if source folder not found
+        # else:
+        #     print("Error executing the ADB command.")
+        #     return  # Exit the function if ADB command fails
+
+         # Check if the command was successful and process the output
         if result.returncode == 0:
             output = result.stdout.strip()
             if output:
-                if verbose > 2:
-                    print(f"Folder '{source_folder}' found at:")
-                    print(output)
-                else:
-                    print(f"Folder '{source_folder}' not found on the device.")
-                    return  # Exit the function if source folder not found
+                   if verbose > 2:
+                       print(f"Folder '{source_folder}' found at:")
+                       print(output)
             else:
+                if verbose > 2: 
+                    print(f"Folder '{source_folder}' not found on the device.")
+                return  # Exit the function if source folder not found
+        else:
+            if verbose > 2:
                 print("Error executing the ADB command.")
-                return  # Exit the function if ADB command fails
+            return  # Exit the function if ADB command fails
 
-       
     
         source_directory = output
         if verbose > 1: print("source directory:", source_directory)
@@ -183,4 +201,3 @@ if __name__ == "__main__":
     destination_folder = get_path(PathType.RAW_IMAGE)
     transfer_images_from_device(source_folder, 
                         destination_folder, verbose = 2)
-

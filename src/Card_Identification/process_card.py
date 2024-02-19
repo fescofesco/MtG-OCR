@@ -21,6 +21,7 @@ import os
 from card_extraction import extract_card
 from configuration_handler import MtGOCRData
 from path_manager import (get_path, PathType)
+from crop_to_text import process_image
 
 def create_rois_from_filename(filename, mtg_ocr_config, card= None, verbose =0):
     """
@@ -119,6 +120,7 @@ def get_roi(card, coordinates=None, title=None, verbose=1):
     if not isinstance(coordinates[0][0], list):
       coordinates = [coordinates]
       print("coordinates were changed")
+      print(coordinates)
 
 
     
@@ -156,11 +158,18 @@ def safe_card_roi(card_roi, title='filename', mode='roi', verbose=0):
 
     # Construct the filename using the mode, title, and version
     filename = f"{path_to_roi}/{title}_{mode}_{version}.jpg"
+    filename1 = f"{path_to_roi}/{title}_{mode}_{version}_crop.jpg"
+
 
     cv2.imwrite(get_path(PathType.PROCESSED_ROI, filename), card_roi)
     if verbose >2:
         print(f"Try to write ROIs {title}_{mode}_{version}.jpg")
-    
+    try:
+        process_image(filename,filename1, verbose = 0)
+    except TypeError:
+        pass
+
+
 def checkif_imageloaded(result, error_message = None):
     if error_message == "Image not loaded":
         # Handle image loading error
@@ -186,8 +195,8 @@ if __name__ == "__main__":
     #  get the necessary parameters from confiog parameters.txt handler
     mtg_ocr_config  = MtGOCRData()
     # put iamage as filename in path
-    filename = "3.jpg"
-    path = get_path(PathType.RAW_IMAGE_TEST, filename)
+    filename = "1.jpg"
+    path = get_path(PathType.TEST_RAW_IMAGE, filename)
     print(path)
     card, error = extract_card(path,verbose = 2)
     if error != None:

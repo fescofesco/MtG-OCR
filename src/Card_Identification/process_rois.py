@@ -259,22 +259,40 @@ def find_card_by_infos(pot_collectornumbers, pot_sets, pot_rarities, pot_cardnam
         elif rarity == "M":
             updated_pot_rarities.append("mythic")
 
-        # Start by filtering the scryfall_data for "name"
+        # Regular expression pattern to check if a string contains any letters
+        # this kicks out any promo or foreign language cards
+        contains_letters_pattern = re.compile('[a-zA-Z]')
+        
+        # Assuming 'name' and 'cards' are defined somewhere
         possible_cards = []
         for name in pot_cardnames:
             for card in scryfall_all_data:
-                if card["name"] == name:
+                if card["name"] == name and not contains_letters_pattern.search(card["collector_number"]):
                     possible_cards.append(card)
-    
-    
+               
+
         pot_collectornumbers = [str(num).lstrip('0') for num in pot_collectornumbers]
         print("modified ccn",pot_collectornumbers)
         pot_collectornumbers = list(set(pot_collectornumbers))
         
         
+        unique_combinations = set()
+        unique_cards = []
+
+        for card in possible_cards:
+            # Create a tuple containing the values of "name", "set", and "collector_number"
+            card_tuple = (card["name"], card["set"], card["collector_number"])
+            
+            # Check if the combination is not already in unique_combinations
+            if card_tuple not in unique_combinations:
+                # Add the combination to unique_combinations set
+                unique_combinations.add(card_tuple)
+                # Add the card to unique_cards
+                unique_cards.append(card)
+                
       
         
-        for card in possible_cards:
+        for card in unique_cards:
             best_name_dist = float("inf")
             best_set_dist = float("inf")
             best_collector_number_dist = float("inf")
@@ -284,7 +302,6 @@ def find_card_by_infos(pot_collectornumbers, pot_sets, pot_rarities, pot_cardnam
                 if name_dist < best_name_dist:
                     best_name_dist = name_dist
                     # best_name = pot_cardname
-      
             for pot_set in pot_sets:
                 set_dist = levenshtein_distance(card["set"].lower(), pot_set.lower())
                 if set_dist < best_set_dist:
@@ -298,81 +315,22 @@ def find_card_by_infos(pot_collectornumbers, pot_sets, pot_rarities, pot_cardnam
                         best_collector_number_dist = collector_number_dist
                                                # Update the score for the card
                         
-            card["score"] = (best_name_dist + best_set_dist) * 2 + best_collector_number_dist
-        
+            card["score"] = (best_name_dist + best_set_dist) + best_collector_number_dist
                         # Sort the possible cards by their score
-        possible_cards = sorted(possible_cards, key=lambda card: card["score"])
-        best_match = possible_cards[0]
+        sorted_cards = sorted(unique_cards, key=lambda card: card["score"])
+        best_match = sorted_cards[0]
         # Return the best matching card
-        return best_match, possible_cards
-    else:
-        return possible_cards[0], possible_cards
+        return best_match, sorted_cards
 
-
-
-def preprocess_roi(roi, verbose =0):
-    """
-    
-    crops away the white part above the UI
-    
-    
-    Parameters
-    ----------
-    roi : cv2 image
-        DESCRIPTION.
-    verbose : TYPE, optional
-        DESCRIPTION. The default is 0.
-    
-    Returns
-    -------
-    TYPE
-        DESCRIPTION.
-    """
-    
-    gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(gray, (7,7), 0)
-    thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
-    
-    
-    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    
-    # Find the largest contour
-    largest_contour = max(contours, key=cv2.contourArea)
-    
-    # Create a mask for the largest contour
-    mask_largest_contour = np.zeros_like(gray)
-    cv2.drawContours(mask_largest_contour, [largest_contour], -1, 255, -1)
-    
-    # Bitwise AND operation to extract the area within the contour
-    result = cv2.bitwise_and(roi, roi, mask=mask_largest_contour)
-    
-    # Find bounding rectangle of the largest contour
-    x, y, w, h = cv2.boundingRect(largest_contour)
-    
-    # Crop the image excluding the black border
-    cropped_image = result[y:y+h, x:x+w]
-    
-   
-    if verbose >=2: 
-        # cv2.imshow('Cropped Image', cropped_image)
-        cv2.imshow("Original Image", roi)
-        # cv2.imshow('Threshed Image', thresh)
-    
-        # Display the result
-
-        # cv2.destroyWindow("Cropped Image")
-        cv2.waitKey(1)
-        # cv2.destroyAllWindows()
-    
-    return cropped_image
 
 
 
 def extract_set_info(set_code_roi,verbose = 0):
     gray = cv2.cvtColor(set_code_roi, cv2.COLOR_BGR2GRAY)
     gray = cv2.bitwise_not(gray)
-    display_image("gray",gray)
-    cv2.waitKey(1)
+    if verbose >2: 
+        display_image("gray",gray)
+        cv2.waitKey(1)
 
     # Perform OCR to extract text from the set code ROI
     custom_config = r'--oem 3 --psm 6'  # Adjust as needed
@@ -424,8 +382,8 @@ def extract_name_info(contour_name_roi, pot_letters, verbose = 0):
     
     image = contour_name_roi
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(gray, (7,7), 0)
-    thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
+    # blur = cv2.GaussianBlur(gray, (7,7), 0)
+    # thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
     # tresh_bw = cv2.bitwise_not(gray)
 
     if verbose >4: 
@@ -449,13 +407,13 @@ def extract_name_info(contour_name_roi, pot_letters, verbose = 0):
         custom_config = custom_config.replace(char, '\\' + char)
 
     # Perform OCR and extract text using the configured whitelist
-    set_code_text = pytesseract.image_to_string(gray, config=custom_config)
-    set_code_text_default = pytesseract.image_to_string(gray)
-    set_code_text_default2 = pytesseract.image_to_string(thresh)
+    # set_code_text = pytesseract.image_to_string(gray, config=custom_config)
+    set_code_text_default = pytesseract.image_to_string(gray, lang='eng', config='--psm 6 --oem 3')
+    # set_code_text_default2 = pytesseract.image_to_string(thresh)
 
     if verbose >2:
             print("extract_name_info") 
-            print("custom confing tesseract tresh:", set_code_text_default2)
+            # print("custom confing tesseract tresh:", set_code_text_default2)
             print("default confing tesseract (currently used):", set_code_text_default)
 
 
@@ -467,7 +425,7 @@ def extract_name_info(contour_name_roi, pot_letters, verbose = 0):
     # pot_name = ''.join(pot_name_list)
     if verbose >2: print(set_code_text_default)
     # Join the list of characters into a single string
-    pot_name = ''.join(set_code_text_default)
+    # pot_name = ''.join(set_code_text_default)
     if verbose >2: print("potential name", set_code_text_default)
 
     return set_code_text_default
@@ -671,12 +629,15 @@ if __name__ == "__main__":
 
     #  Visage of Dread, LCI 
     filename = "1.jpg" 
-    # Food Token ELD
+  
     #goblin from TRGN 
-    filename = "2.jpg"
+    # filename = "2.jpg"
+    # Food Token ELD
+    filename = "3.jpg"
     path = get_path(PathType.TEST_RAW_IMAGE, filename)
     
     card, error = extract_card(path,verbose)
+    
     if error != None:
         print("error:", error)
      
@@ -688,10 +649,14 @@ if __name__ == "__main__":
     cardname = return_cardname_from_ROI(filename, scryfall_all_data, verbose =2)
     display_cardname(cardname)
  
-    
-    
 
+  
+    # name = extract_name_info(img, potential_letters, verbose = 6)
+    # print(name)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
     
-    
+    # cardname_by_name ['Voldaren Epicure // Voldaren Epicure', 'Mirozel'] pot_sets ['teM', '3GV', 'cle', 'TIN', 'INA', 'CKO', 'AFA', 'NPe', 'Ca1', 'MAR', 'WEN', 'OWE', 'ART', '827', '182', '277', 'FAC', 'CVO', 'sie', 'KOV'] pot_rarities ['R', 'T', 'M', 'C'] pot_collectornumbers ['277', '182', '1827']
+    # modified ccn ['277', '182', '1827']
             
     

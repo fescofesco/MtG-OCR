@@ -96,11 +96,11 @@ def main_Card_Identification(mode:str = None, verbose =None):
     
         
     elif mode == "adb-live":
-        filename = get_newest_image(get_path(PathType.RAW_IMAGE))
         source_folder= "MTG-OCR"
         destination_folder = get_path(PathType.RAW_IMAGE)
         transfer_images_from_device(source_folder, destination_folder, verbose = 2)
-  
+        filename = None
+
 
     if verbose > 0: 
         print("Main Func Of main_MtG-Card_Identification")
@@ -110,25 +110,34 @@ def main_Card_Identification(mode:str = None, verbose =None):
     scryfall_file = mtg_ocr_config.open_scryfall_file(verbose )
   
     card_data = {"identified_cards": [], "unidentified_cards": [], "results": []}
-
     
+
+            
     if mode == "adb-live":
-        while True:
-          # Transfer images from the device
-          transfer_images_from_device(source_folder, destination_folder, verbose = 0)
-          # Get the newest image
-          while True:
-               filename_new = get_newest_image(destination_folder)
-               if filename_new is not None:
-                   break
-               time.sleep(1)
-               # Process the image with card extraction
-               if filename_new != filename:
-                   card_data =  process_images(filename, card_data, mtg_ocr_config,scryfall_file, verbose)
-                   filename_new = filename
-               else:
-                   print(f"File '{filename}' does not exist. Skipping card extraction.")
+        last_processed_filename = "None"  # Initialize variable to keep track of the last processed filename
         
+        transfer_images_from_device(source_folder, destination_folder, verbose=0)
+
+        # Get the newest image
+        while True:
+            if verbose > 2:  print("last_processed_filename:", last_processed_filename)
+            filename_new = get_newest_image(destination_folder)
+            if verbose >2:  print("filename_new:", filename_new)
+    
+            if filename_new is None:
+                transfer_images_from_device(source_folder, destination_folder, verbose=0)
+            elif filename_new != last_processed_filename:
+                print("processing file")
+                card_data =  process_images(filename_new, card_data, mtg_ocr_config,scryfall_file, verbose)
+                cv2.waitKey(1)
+                last_processed_filename = filename_new
+                transfer_images_from_device(source_folder, destination_folder, verbose=0)
+            elif filename_new == last_processed_filename:
+                transfer_images_from_device(source_folder, destination_folder, verbose=0)
+
+            else:
+                time.sleep(1)  # Sleep if the same image is still the newest
+
     else:
         if all_images ==[]:
             print("No images found in ",get_path(PathType.RAW_IMAGE), " exiting program.")
@@ -176,7 +185,7 @@ def process_images(filename, card_data, mtg_ocr_config,scryfall_file, verbose):
             # display_cardname(cardnames)
 
             if cardnames is not None:
-               updated_card_data = user_cardname_confirmation(filename, cardnames[0], card_data, card, scryfall_file, mtg_ocr_config, verbose)
+               updated_card_data = user_cardname_confirmation(filename, cardnames, card_data, card, scryfall_file, mtg_ocr_config, verbose)
                card_data = updated_card_data
                if verbose > 3:
                    print(card_data)
@@ -224,11 +233,11 @@ def update_image_list(card_data):
 if __name__ == "__main__":
 
     # cardnames = main_Card_Identification('adb')
-    verbose = 3
-    cardnames = main_Card_Identification('all_images', verbose)
+    verbose = 2
+    # cardnames = main_Card_Identification('all_images', verbose)
     # cardnames = main_Card_Identification('adb')
     # main_Card_Identification('quickstart', verbose)
-    # cardnames = main_Card_Identification('adb-live')
+    cardnames = main_Card_Identification('adb-live')
 
 
 

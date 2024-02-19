@@ -37,7 +37,7 @@ class TestIdentifyCard(unittest.TestCase):
             """" Checks if the contents of the raw_image are correct"""
             path_to_test_folder = get_path(PathType.RAW_IMAGE,verbose =0)
             contents_test_folder = return_folder_contents(path_to_test_folder)
-            expected_contents = ['1.jpg', '2.jpg', '2023-12-24', '3.jpg', '4.jpg']
+            expected_contents = ['1.jpg', '2.jpg', '2023-12-24', '3.jpg', '4.jpg','5.jpg']
             self.assertEqual(contents_test_folder, expected_contents)
         
     

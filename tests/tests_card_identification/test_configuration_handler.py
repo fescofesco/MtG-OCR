@@ -15,7 +15,6 @@ import unittest
 from unittest.mock import patch
 import os
 from pathlib import Path
-from enum import Enum
 import sys
 # from card_identification.card_extraction import extract_card # does not work
 # card_identification is currently not recognised as an module

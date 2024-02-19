@@ -127,7 +127,7 @@ class TestProcessCard(unittest.TestCase):
         if error != None:
             print("error:", error)
         # self.mtg_ocr_config.set_relative_coordinates(card, verbose =1)
-        create_rois_from_filename(filename, self.mtg_ocr_config, card, verbose = 0)
+        create_rois_from_filename(filename, self.mtg_ocr_config, card, verbose = 2)
         cardname = return_cardname_from_ROI(filename, self.scryfall_all_data, verbose =1)
         display_cardname(cardname)
         # display_cardname(cardname)
@@ -151,6 +151,22 @@ class TestProcessCard(unittest.TestCase):
         self.assertEqual(cardname[0]["name"],"Asmoranomardicadaistinaculdacar")
         # cant check for set because resolution is to bad
         self.assertEqual(cardname[0]["set"],"mh2")
+  
+    def test_create_rois_from_filename_sword(self):
+        # Asmoranomardicadaistinaculdacar from mh2
+        filename = "5.jpg"
+        path = get_path(PathType.RAW_IMAGE, filename)
+        card, error = extract_card(path,verbose = 0)
+        if error != None:
+            print("error:", error)
+        # self.mtg_ocr_config.set_relative_coordinates(card, verbose =1)
+        create_rois_from_filename(filename, self.mtg_ocr_config, card, verbose = 0)
+        cardname = return_cardname_from_ROI(filename, self.scryfall_all_data, verbose =1)
+        display_cardname(cardname)
+
+        self.assertEqual(cardname[0]["name"],"Sword of Forge and Frontier")
+        # cant check for set because resolution is to bad
+        self.assertEqual(cardname[0]["set"],"one")
   
 if __name__ == '__main__':
     unittest.main()
