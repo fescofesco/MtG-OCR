@@ -67,9 +67,20 @@ def extract_card(path_to_img, verbose=0):
     "Contours not found"
     
     """
+    
+    supported_extensions = [".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif", ".webp"]
+
+    # Check if the path_to_img ends with any of the supported extensions
+    if not any(path_to_img.endswith(extension) for extension in supported_extensions):
+        path_to_img += '.jpg'
+        if verbose > 2:
+            print("assuming jpg file")
+        
+
     # Check if jpg or filename withoug .jpg was provided
-    if not path_to_img.endswith('.jpg'):
+    if not (path_to_img.endswith('.jpg') or path_to_img.endswith('.png')):
         path_to_img = path_to_img + '.jpg'
+        if verbose > 2: print("assuming jpg file")
     
 
     if not os.path.isabs(path_to_img):  # Check if the path is relative
@@ -149,22 +160,7 @@ def extract_card(path_to_img, verbose=0):
     cnts_sorted = sorted(cnts, key = cv2.contourArea, reverse = True)[:1]
     screenCnt = None
 
-    cnts_sorted1 = filter_and_sort_contours(cnts_sorted, image, verbose)
-    # filtered_contours = cnts_sorted
-
-    # if verbose > 2:
-    #     image2 = image.copy()
-    #     cnts_top4 = sorted(filtered_contours, key = cv2.contourArea, reverse = True)[:4]
-    #     cv2.drawContours(image2,cnts_top4,-1,(0,255,0),2)
-    #     display_image("Top 4 contours filtered",image2)
- 
-    # 8) convert it to a contour with 4 sides
-    for c in cnts_sorted1:
-        perimeter = cv2.arcLength(c, True)
-        approx = cv2.approxPolyDP(c, 0.025 * perimeter, True)
-        if len(approx) == 4: 
-            screenCnt = approx
-
+    
 
     # 8) convert it to a contour with 4 sides
     for c in cnts_sorted:
@@ -259,11 +255,7 @@ def extract_card(path_to_img, verbose=0):
         target_corners_reshaped = target_corners_aligned.reshape(4,2)
         target_corners_typed =  target_corners_reshaped.astype(np.float32)  
         
-        # Now, original_corners_reshaped should have the shape (4, 1, 2)
 
-        # Convert to float32
-  
-       
 
         # Crate the transformation matrix
         
@@ -272,9 +264,6 @@ def extract_card(path_to_img, verbose=0):
         assert target_corners_typed.shape == (4, 2), "target_corners_b should have shape (4, 2)"
         
         
-        
-  
-
 
         matrix = cv2.getPerspectiveTransform(original_corners_typed, 
                                              target_corners_typed)
@@ -282,16 +271,7 @@ def extract_card(path_to_img, verbose=0):
         result = cv2.warpPerspective(original_image, matrix, 
                                      (target_width, target_height))
         
-        # target_corners1 = target_corners
-        # target_corners1[1]= target_corners[3]
-        # target_corners1[3]= target_corners[1]
-        
-        # matrix = cv2.getPerspectiveTransform(original_corners, 
-        #                                      target_corners)
-        # # Transfrom orignal image iwth the transformation matrix
-        # result = cv2.warpPerspective(original_image, matrix, 
-        #                              (target_width, target_height))
-   
+
         if verbose > 0:
             display_image(f"{filename} Transformed Card Final", result)
 
@@ -317,131 +297,7 @@ def extract_card(path_to_img, verbose=0):
         
         return None, error_message
     
-def filter_and_sort_contours(contours, original_image, margin=-0.05, verbose=0):
-    """
-    Filters and sorts contours based on proximity to line equations with a margin.
 
-    Args:
-        cnts: List of contours to filter.
-        original_image: Original image for visualization (optional).
-        margin: Percentage margin applied to line equations.
-        verbose: Verbosity level (0-3) for displaying images.
-
-    Returns:
-        List of filtered contours.
-    """
-    contour = contours[0]
-    
-    for cts in contours:
-    #     cv2.drawContours(original_image, cts, -1, (0, 255, 255), 1)
-        cv2.drawContours(original_image, cts, -1, (0, 255, 255),3)
-
-    if verbose > 2:
-        display_image("Orig Contours", original_image)
-    
-        
-
-     
-    image3 = original_image.copy()
-
-
-    # Approximate the contour with a polygon
-    epsilon = 0.01 * cv2.arcLength(contour, True)
-    approx = cv2.approxPolyDP(contour, epsilon, True)
-
-    try:
-        innermost_points = find_innermost_corners(approx, image3, verbose)
-    except ZeroDivisionError:
-        return None, "Card cannot touch image corners"
-
-    if verbose>2: print("innermost_points=", innermost_points)
-   
-    innermost_points_aligned = align_corner_points(innermost_points)
-    if verbose >2: print("innermost_points_aligned=", innermost_points_aligned)
-    # Calculate line equations with margin
-    line_eqs = []
-
-    for corner in innermost_points_aligned:
-        cv2.circle(image3, corner[0], 5, (0, 255, 0), -1)  # Draw a filled green circle
-    
-    if verbose > 2:
-        display_image("Innermost Corners after align", image3)
-      
-    
-    # Calculate line equations
-    for i in range(len(innermost_points_aligned)):
-  
-        x1, y1 = innermost_points[i][0]
-        x2, y2 = innermost_points[(i + 1) % len(innermost_points)][0]
-        m = (y2 - y1) / (x2 - x1) if x2 != x1 else float('inf')
-        b = y1 - m * x1
-        line_eqs.append((m, b))
-
-    # Find points inside and outside the region
-    inside_points = []
-    outside_points = []
-
-
-
-    # Iterate over each point in contour_points
-    for point in contour:
-        x, y = point[0]
-        # Check each line equation separately
-        for i, (m, b) in enumerate(line_eqs):
-            # Apply different checks for each line_eq
-            if i == 1:
-                if (y - b - m * x) * (1 + margin) > 0:  # Change the sign for line_eqs[1]
-                    inside_points.append(point)
-                else:
-                    outside_points.append(point)
-                    break  # If a point is found outside by any line_eq, break the inner loop
-            elif i == 2:
-                 if (y - b - m * x) * (1 + margin) < 0:  # Change the sign for line_eqs[1]
-                     inside_points.append(point)
-                 else:
-                     outside_points.append(point)
-                     break  # If a point is found outside by any line_eq, break the inner loop
-            elif i == 3:
-                 if (y - b - m * x) * (1 + margin) < 0:  # Change the sign for line_eqs[1]
-                     inside_points.append(point)
-                 else:
-                     outside_points.append(point)
-                     break  # If a point is found outside by any line_eq, break the inner loop
-                     
-            else:
-                if (y - b - m * x) * (1 + margin) > 0:
-                    inside_points.append(point)
-                else:
-                    outside_points.append(point)
-                    break  # If a point is found outside by any line_eq, break the inner loop
-
-
-    for point in innermost_points_aligned:
-        inside_points.append(point)
-
-    # Draw contours using different colors for inside and outside points
-    color_inside = (0, 255, 0)  # Green color for points inside the region
-    color_outside = (0, 0, 255)  # Red color for points outside the region
-    image4 = original_image.copy()
-    
-    
-    if verbose >2:
-           
-        for point in inside_points:
-            pt = tuple(point.squeeze())  # Convert the contour to a tuple of coordinates
-            cv2.circle(image4, pt, radius=1, color=color_inside, thickness=2)
-        
-        for point in outside_points:
-            pt = tuple(point.squeeze())  # Convert the contour to a tuple of coordinates
-            cv2.circle(image4, pt, radius=1, color=color_outside, thickness=2)
-            
-            
-        
-        display_image("Filtered Contours", image4)
-        
-    
-    
-    return inside_points
 
 
 
@@ -531,6 +387,7 @@ def align_corner_points(input_corners):
 
     """
     # Check if input_corners has shape (4, 2) or (4, 1, 2)
+    
     if input_corners.shape == (4, 2):
         # Order points if necessary
          mode = "4,2"
@@ -539,6 +396,8 @@ def align_corner_points(input_corners):
         mode = "4,1,2"
         input_corners_copy = input_corners.reshape(4, 2)
     else:
+        
+        print("shape of input corners:", input_corners.shape())
         raise ValueError("Invalid input shape. Expected (4, 2) or (4, 1, 2).")
 
            
@@ -594,26 +453,23 @@ def align_corner_points(input_corners):
     else:
         corners_return = corners
     
-
     return corners_return
-
-
 
 
 
 if __name__ == "__main__":
     cv2.destroyAllWindows()
     # asmo
-    # filename = "1.jpg"
+    filename = "1.jpg"
     # goblin cut top
     filename = "2.jpg"
     # food
     filename = "3.jpg"
     # vsiage of dread
-    # filename = "4.jpg"
-
+    filename = "4.jpg"
     # sword
     filename = "5.jpg"
+
     mypath = get_path(PathType.TEST_RAW_IMAGE,filename)
     card, error = extract_card(mypath, verbose =3)
     if error:
