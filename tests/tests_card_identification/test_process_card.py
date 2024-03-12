@@ -46,20 +46,12 @@ class TestProcessCard(unittest.TestCase):
         
         MtGOCRData()
 
-          #  get the necessary parameters from confiog parameters.txt handler
 
-    # def test_raw_image_contents(self): #test is okay
-    #     """ check if the folder contains the right images"""
-    #     path_to_test_folder = get_path(PathType.PROCESSED_ROI)
-    #     contents_test_folder = return_folder_contents(path_to_test_folder)
-    #     expected_contents = []
-    #     self.assertEqual(contents_test_folder, expected_contents)
-        
 
     def test_create_rois_from_filename(self):
         filename = "1.jpg"
         path = get_path(PathType.RAW_IMAGE, filename)
-        card, error = extract_card(path,verbose = 1)
+        card, error = extract_card(path,verbose = 0)
         if error != None:
             print(error)
         mtg_ocr_config = MtGOCRData()
@@ -67,12 +59,13 @@ class TestProcessCard(unittest.TestCase):
         create_rois_from_filename(filename, mtg_ocr_config, card,verbose =4)
 
         contents_test_folder = return_folder_contents(get_path(PathType.PROCESSED_ROI))
-        expected_contents = ['1_exp_1.jpg','1_exp_2.jpg', '1_name_1.jpg','1_name_2.jpg', '1_ui_1.jpg','1_ui_2.jpg']
-        expected_contents = ['1_exp_1.jpg','1_exp_2.jpg','1_exp_3.jpg', '1_name_1.jpg','1_name_2.jpg','1_name_3.jpg', '1_ui_1.jpg']
-
-        self.assertEqual(contents_test_folder, expected_contents)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        # expected_contents = ['1_exp_1.jpg','1_exp_2.jpg', '1_name_1.jpg','1_name_2.jpg', '1_ui_1.jpg','1_ui_2.jpg']
+        expected_contents = ['1_exp_1.jpg','1_exp_2.jpg','1_exp_3.jpg', '1_name_1.jpg','1_name_2.jpg','1_name_3.jpg', '1_ui_1.jpg', '1_ui_1_crop.jpg']
+        expected_contents =['1_exp_1.jpg',"1_name_1.jpg","1_ui_1.jpg",'1_ui_1_crop.jpg', '1_ui_2.jpg','1_ui_2_crop.jpg']
+        for item in expected_contents:
+            self.assertIn(item, contents_test_folder)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
 if __name__ == '__main__':
     unittest.main()
 

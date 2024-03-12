@@ -21,7 +21,7 @@ import os
 from card_extraction import extract_card
 from configuration_handler import MtGOCRData
 from path_manager import (get_path, PathType)
-from crop_to_text import process_image
+from crop_to_text import crop_image
 
 def create_rois_from_filename(filename, mtg_ocr_config, card= None, verbose =0):
     """
@@ -63,11 +63,16 @@ def create_rois_from_filename(filename, mtg_ocr_config, card= None, verbose =0):
     mtg_ocr_config = MtGOCRData()
     
     title = filename.strip(".jpg")
-    modes = ["name", "ui", "exp"]
+    modes = ["name", "ui", "exp", "full"]
 
     for mode in modes:
-        coordinates = mtg_ocr_config.get_coordinates_from_file(mode)
-        generated_roi = get_roi(card, coordinates, title, verbose)
+        if mode != "full":
+            coordinates = mtg_ocr_config.get_coordinates_from_file(mode)
+            generated_roi = get_roi(card, coordinates, title, verbose)
+        elif mode == "full":
+            generated_roi = get_roi(card =card,coordinates = [[[0,0],[1,1]]],title=title, verbose = verbose)
+        else:
+            print("Could not recognise mode : ",mode)
         for i, roi in enumerate(generated_roi):
             safe_card_roi(roi, title, mode, verbose)
 
@@ -111,12 +116,18 @@ def get_roi(card, coordinates=None, title=None, verbose=1):
             1 the rectangular snipping is displayed on top of the card file
             
     output
-    roi ... cv2 image inside the specified corner coordinats [[x0,y0],[x1,y1]]
+    roi ... generator of cv2 image inside the specified corner coordinats 
+            [[x0,y0],[x1,y1]]
 
     """
     if title is None:
         title = "roi1"
         
+    if coordinates is None:
+        print("File doew not contain valid coordinates. Content:")
+        print(coordinates)
+        return None
+    
     if not isinstance(coordinates[0][0], list):
       coordinates = [coordinates]
       print("coordinates were changed")
@@ -142,8 +153,7 @@ def get_roi(card, coordinates=None, title=None, verbose=1):
                   cv2.destroyWindow(title)
         yield roi
       
-        
-          
+
 
 def safe_card_roi(card_roi, title='filename', mode='roi', verbose=0):
     # Find the version number for the filename
@@ -157,39 +167,24 @@ def safe_card_roi(card_roi, title='filename', mode='roi', verbose=0):
                   f"{path_to_roi}/{title}_{mode}_{version}.jpg")
 
     # Construct the filename using the mode, title, and version
-    filename = f"{path_to_roi}/{title}_{mode}_{version}.jpg"
-    filename1 = f"{path_to_roi}/{title}_{mode}_{version}_crop.jpg"
+    out_path = f"{path_to_roi}/{title}_{mode}_{version}.jpg"
+    cv2.imwrite(get_path(PathType.PROCESSED_ROI, out_path), card_roi)
+  
+    if verbose >2:
+        print(f"Write ROIs {title}_{mode}_{version}.jpg")
+        
+    out_path_crop = f"{path_to_roi}/{title}_{mode}_{version}_crop.jpg"
 
 
-    cv2.imwrite(get_path(PathType.PROCESSED_ROI, filename), card_roi)
     if verbose >2:
         print(f"Try to write ROIs {title}_{mode}_{version}.jpg")
     try:
-        process_image(filename,filename1, verbose = 0)
+        crop_image(out_path,out_path_crop, verbose = 0)
     except TypeError:
         pass
+    
 
 
-def checkif_imageloaded(result, error_message = None):
-    if error_message == "Image not loaded":
-        # Handle image loading error
-        retry_count = 0
-        max_retries = 3
-        
-        while retry_count < max_retries:
-            mtg_ocr_config.set_image_location()
-            retry_result, retry_error = extract_card("1.jpg")
-            if retry_result is not None:
-                return retry_result
-            else:
-                retry_count += 1
-        
-        print("Image not found even after retrying.")
-        return None
-    else:
-        # Process the result when the image was loaded successfully
-        # Do something with the result
-        return result
             
 if __name__ == "__main__":
     #  get the necessary parameters from confiog parameters.txt handler
@@ -197,12 +192,9 @@ if __name__ == "__main__":
     # put iamage as filename in path
     filename = "1.jpg"
     path = get_path(PathType.TEST_RAW_IMAGE, filename)
-    print(path)
-    card, error = extract_card(path,verbose = 2)
+    print("path: ",path)
+    card, error = extract_card(path,verbose = 0)
     if error != None:
         print(error)
     create_rois_from_filename(filename, mtg_ocr_config, card,verbose =3)
-    
-    
-   
 

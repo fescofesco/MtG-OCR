@@ -48,7 +48,6 @@ import os
 import re
 import json
 import filecmp
-import numpy as np
 from card_extraction import display_image
 from process_card import create_rois_from_filename
 from card_extraction import extract_card
@@ -513,7 +512,10 @@ def find_cardname_byname(pot_cardnameS, scryfall_all_data, verbose = 1):
 
 
 def display_cardname(cardname):
-    print(cardname[0]["name"], "from ",cardname[0]['set'].upper())
+    if cardname is not None:
+        print(cardname[0]["name"], "from ",cardname[0]['set'].upper())
+    else:
+        print("Cardname was not identified.")
 
     
 def str_cardname(tuple_name_and_infos):

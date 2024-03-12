@@ -14,6 +14,9 @@ from collections import defaultdict
 import csv
 import colorama
 from colorama import Fore, Style
+import json
+from path_manager import (get_path, PathType)
+from card_extraction import (display_image, extract_card)
 
 
 def load_files(file_paths=None):
@@ -43,30 +46,17 @@ def load_txt_files(file_paths=None):
     
     for file_path in file_paths:
         with open(file_path, 'r', newline='') as file:
-
-            lines = file.read()
-            print("lines =",lines)
+            content = json.load(file)
        
-            for line in lines:
-               
-                print()
-                # print(line)
-                # print(line[0])
-                print("line", line)
-                image_name = line[0]
-                print("img name", image_name)
-                # print("l1",line[1])
-                # card_info = [eval(x for x.strip() in line[1])]  # Extract card information
-         
-                # Define the order of keys for the dictionary
+            for entry in content:
+                image_name = entry[0]
+                card_info = entry[1]
+
                 keys = ["name", "CMC", "Type", "Color", "Set", "Collector Number", "Rarity", "Color Category", 
                         "status", "Finish", "maybeboard", "image URL", "tags", "Notes", "MTGO ID"]
                 
-                # Create dictionary with card information
-                card_dict = dict(zip(keys, line[1]))
-                card_dict["imagename"] = image_name  # Add image name to dictionary
-                print("name", card_dict["name"])
-                print("CMC",card_dict["CMC"])
+                card_dict = dict(zip(keys, card_info))
+                card_dict["imagename"] = image_name
                 
                 data.append(card_dict)
     return data
@@ -148,16 +138,20 @@ def print_entry(entry, differing_keys=None):
                 print(f"{key}: {value}", end=" ")
     print()
 
+import os
 
-    
+def find_image_by_name(image_name, folder):
+    for root, dirs, files in os.walk(folder):
+        if image_name in files:
+            return os.path.join(root, image_name)
+    return None
 
-def find_and_display_differing_duplicates(data, default_duplicates):
-    colorama.init()  # Initialize colorama for cross-platform color support
+def find_and_display_differing_duplicates(data, default_duplicates, images_folder):
     name_map = defaultdict(list)
     
     # Step 1: Group entries by name
     for entry in data:
-        key = (entry["name"], entry["Set"], entry["Collector Number"], entry["Finish"], entry["status"])
+        key = (entry["name"], entry["Set"], entry["Collector Number"], entry["Finish"], entry["status"], entry["imagename"])
         name_map[entry["name"]].append(key)
 
     # Step 2: Iterate through grouped entries
@@ -171,29 +165,30 @@ def find_and_display_differing_duplicates(data, default_duplicates):
                     for k, v in zip(["Set", "Collector Number", "Finish", "status"], key[1:]):
                         differing_entries[k].append(v)
                 
-                # Step 4: Print entries with differing keys highlighted
+                # Step 4: Print entries with differing keys
                 print(f"Differing Duplicates for {Fore.CYAN}{name}{Style.RESET_ALL}:")
-                options = []  # Initialize options list
-                for i, (key, values) in enumerate(differing_entries.items(), 1):
-                    print("values",values)
-                    print("keys",keys)
-                    if len(set(values)) > 1:
-                        options.append((i, values))
-                        print(f"{i}: ", end="")
-                        for value in values:
-                            if values.count(value) == 1:
-                                print(f"{Fore.RED}{key}: {value}{Style.RESET_ALL}", end=" ")  # Print differing key-value pair in red
-                            else:
-                                print(f"{key}: {value}", end=" ")  # Print non-differing key-value pair
-                        print()
-
+                print(keys)
+                for index, key in enumerate(keys):
+                    entry_info = key[:1] + key[1:5]  # Remove the name and image name from the key
+                    print(f"{index+1}:", " ".join(map(str, entry_info)))
+                
+                    # Show the option to view the image
+                    choice = input("Do you want to view the image associated with this entry? (Y/N): ")
+                    if choice.lower() == 'y':
+                        image_path = find_image_by_name(key[-1], images_folder)
+                        if image_path:
+                            card, error = extract_card(image_path)
+                            display_image(name,card)
+                        else:
+                            print("Image not found.")
+            
             choice = input("Which is the correct entry? (Enter index or N to skip): ")
             if choice.lower() != 'n':
                 try:
                     choice = int(choice)
-                    if 1 <= choice <= len(options):
+                    if 1 <= choice <= len(keys):
                         correct_entry = keys[choice - 1]
-                        correct_index = data.index({"name": name, "Set": correct_entry[1], "Collector Number": correct_entry[2], "Finish": correct_entry[3], "status": correct_entry[4]})
+                        correct_index = data.index({"name": name, "Set": correct_entry[1], "Collector Number": correct_entry[2], "Finish": correct_entry[3], "status": correct_entry[4], "imagename": correct_entry[5]})
                         for key, value in zip(["Set", "Collector Number", "Finish", "status"], correct_entry[1:]):
                             data[correct_index][key] = value
                     else:
@@ -202,15 +197,152 @@ def find_and_display_differing_duplicates(data, default_duplicates):
                     print("Invalid input. Please enter a valid index.")
             elif choice.lower() == 'n':
                 choice = input("Do you want to add this duplicate to default duplicates? (Y/N)")
-                if choice.lower() == ("y" or "yes"): 
+                if choice.lower() in ("y", "yes"): 
                     default_duplicates.append(name)
-                elif choice.lower() == "n":
+                elif choice.lower() in ("n", "no"):
                     pass
                 else:
                     print("Invalid choice.")
         
     return data, default_duplicates
 
+# def find_and_display_differing_duplicates(data, default_duplicates):
+#     name_map = defaultdict(list)
+    
+#     # Step 1: Group entries by name
+#     for entry in data:
+#         key = (entry["name"], entry["Set"], entry["Collector Number"], entry["Finish"], entry["status"])
+#         name_map[entry["name"]].append(key)
+
+#     # Step 2: Iterate through grouped entries
+#     for name, keys in name_map.items():
+#         if len(keys) > 1:
+#             if name not in default_duplicates:
+#                 differing_entries = defaultdict(list)
+                
+#                 # Step 3: Identify differing keys
+#                 for key in keys:
+#                     for k, v in zip(["Set", "Collector Number", "Finish", "status"], key[1:]):
+#                         differing_entries[k].append(v)
+                
+#                 # Step 4: Print entries with differing keys
+#                 print(f"Differing Duplicates for {Fore.CYAN}{name}{Style.RESET_ALL}:")
+#                 for index, key in enumerate(keys):
+#                     entry_info = key[:1] + key[1:]  # Remove the name from the key
+#                     print(f"{index+1}:", " ".join(map(str, entry_info)))
+
+#             choice = input("Which is the correct entry? (Enter index or N to skip): ")
+#             if choice.lower() != 'n':
+#                 try:
+#                     choice = int(choice)
+#                     if 1 <= choice <= len(keys):
+#                         correct_entry = keys[choice - 1]
+#                         correct_index = data.index({"name": name, "Set": correct_entry[1], "Collector Number": correct_entry[2], "Finish": correct_entry[3], "status": correct_entry[4]})
+#                         for key, value in zip(["Set", "Collector Number", "Finish", "status"], correct_entry[1:]):
+#                             data[correct_index][key] = value
+#                     else:
+#                         print("Invalid index. Entry not found.")
+#                 except ValueError:
+#                     print("Invalid input. Please enter a valid index.")
+#             elif choice.lower() == 'n':
+#                 choice = input("Do you want to add this duplicate to default duplicates? (Y/N)")
+#                 if choice.lower() in ("y", "yes"): 
+#                     default_duplicates.append(name)
+#                 elif choice.lower() in ("n", "no"):
+#                     pass
+#                 else:
+#                     print("Invalid choice.")
+        
+#     return data, default_duplicates
+
+
+    
+
+# def find_and_display_differing_duplicates(data, default_duplicates):
+#     colorama.init()  # Initialize colorama for cross-platform color support
+#     name_map = defaultdict(list)
+    
+#     # Step 1: Group entries by name
+#     for entry in data:
+#         key = (entry["name"], entry["Set"], entry["Collector Number"], entry["Finish"], entry["status"])
+#         name_map[entry["name"]].append(key)
+
+#     # Step 2: Iterate through grouped entries
+#     for name, keys in name_map.items():
+#         if len(keys) > 1:
+#             if name not in default_duplicates:
+#                 differing_entries = defaultdict(list)
+                
+#                 # Step 3: Identify differing keys
+#                 for key in keys:
+#                     for k, v in zip(["Set", "Collector Number", "Finish", "status"], key[1:]):
+#                         differing_entries[k].append(v)
+                
+#                 # Step 4: Print entries with differing keys highlighted
+#                 print(f"Differing Duplicates for {Fore.CYAN}{name}{Style.RESET_ALL}:")
+#                 options = []  # Initialize options list
+#                 for i, (key, values) in enumerate(differing_entries.items(), 1):
+#                     print("values",values)
+#                     print("keys",keys)
+#                     if len(set(values)) > 1:
+#                         options.append((i, values))
+#                         print(f"{i}: ", end="")
+#                         for value in values:
+#                             if values.count(value) == 1:
+#                                 print(f"{Fore.RED}{key}: {value}{Style.RESET_ALL}", end=" ")  # Print differing key-value pair in red
+#                             else:
+#                                 print(f"{key}: {value}", end=" ")  # Print non-differing key-value pair
+#                         print()
+
+#             choice = input("Which is the correct entry? (Enter index or N to skip): ")
+#             if choice.lower() != 'n':
+#                 try:
+#                     choice = int(choice)
+#                     if 1 <= choice <= len(options):
+#                         correct_entry = keys[choice - 1]
+#                         correct_index = data.index({"name": name, "Set": correct_entry[1], "Collector Number": correct_entry[2], "Finish": correct_entry[3], "status": correct_entry[4]})
+#                         for key, value in zip(["Set", "Collector Number", "Finish", "status"], correct_entry[1:]):
+#                             data[correct_index][key] = value
+#                     else:
+#                         print("Invalid index. Entry not found.")
+#                 except ValueError:
+#                     print("Invalid input. Please enter a valid index.")
+#             elif choice.lower() == 'n':
+#                 choice = input("Do you want to add this duplicate to default duplicates? (Y/N)")
+#                 if choice.lower() == ("y" or "yes"): 
+#                     default_duplicates.append(name)
+#                 elif choice.lower() == "n":
+#                     pass
+#                 else:
+#                     print("Invalid choice.")
+        
+#     return data, default_duplicates
+
+# def save_data(data, out_path=None):
+#     if out_path is None:
+#         root = tk.Tk()
+#         root.withdraw()
+#         out_path = filedialog.asksaveasfilename(title="Save file", defaultextension=".csv", filetypes=[("CSV files", "*.csv")])
+
+#     header = ["name", "CMC", "Type", "Color", "Set", "Collector Number", "Rarity", "Color Category", "status", "Finish", "maybeboard", "image URL", "tags", "Notes", "MTGO ID"]
+    
+#     out_path = "C:/Users/unisp/Documents/Infoprojekte/MtG_OCR/data/card_identification/results/MainCube_copy.csv"
+
+#     with open(out_path, 'w', newline='') as csv_file:
+#         csv_file.write(",".join(header) + '\n')
+#         for entry in data:
+#             line = f'"{entry["name"]}"'
+#             # line = '"' + entry["name"] + '",' + entry["CMC"]
+#             # for field in header.split(","):
+#             for field in header[1:]:
+#                 if field not in ["CMC","Rarity","Color","Color Category","status","Finish","maybeboard", "image URL"]:
+#                     line += f',"{entry[field]}"'  # Add double quotes for specified fields
+#                 else:
+#                     line += ',' + entry[field]  # Don't add double quotes for "Rarity"
+#             csv_file.write(line + '\n')
+
+
+#     print("CSV file updated successfully.")
 def save_data(data, out_path=None):
     if out_path is None:
         root = tk.Tk()
@@ -219,21 +351,18 @@ def save_data(data, out_path=None):
 
     header = ["name", "CMC", "Type", "Color", "Set", "Collector Number", "Rarity", "Color Category", "status", "Finish", "maybeboard", "image URL", "tags", "Notes", "MTGO ID"]
     
-    out_path = "C:/Users/unisp/Documents/Infoprojekte/MtG_OCR/data/card_identification/results/MainCube_copy.csv"
+    # out_path = "C:/Users/unisp/Documents/Infoprojekte/MtG_OCR/data/card_identification/results/MainCube_copy.csv"
 
     with open(out_path, 'w', newline='') as csv_file:
         csv_file.write(",".join(header) + '\n')
         for entry in data:
             line = f'"{entry["name"]}"'
-            # line = '"' + entry["name"] + '",' + entry["CMC"]
-            # for field in header.split(","):
             for field in header[1:]:
-                if field not in ["CMC","Rarity","Color","Color Category","status","Finish","maybeboard", "image URL"]:
-                    line += f',"{entry[field]}"'  # Add double quotes for specified fields
+                if field in ["CMC", "Collector Number", "MTGO ID"]:  # Convert integer fields to strings
+                    line += ',' + str(entry[field])
                 else:
-                    line += ',' + entry[field]  # Don't add double quotes for "Rarity"
+                    line += f',"{entry[field]}"'  # Add double quotes for specified fields
             csv_file.write(line + '\n')
-
 
     print("CSV file updated successfully.")
 
@@ -287,14 +416,14 @@ def main():
     
     # txt_path =[
     #     r"C:/Users/unisp/Documents/Infoprojekte/MtG_OCR/data/card_identification/results/identified_cards_20240209_150946.txt"]
-    txt_path =[r"C:/Users/unisp/Documents/Infoprojekte/MtG_OCR/identified_cards_20240209_1.txt"]
+    # txt_path =[r"C:/Users/unisp/Documents/Infoprojekte/MtG_OCR/identified_cards_20240209_1.txt"]
     print(txt_path)
     txt_data = load_txt_files(txt_path)
     print(txt_data)
 
     path = "C:/Users/unisp/Documents/Infoprojekte/MtG_OCR/data/card_identification/results/CubeCobraCSV_20240209_182745.csv"
     path = txt_path
-    data1 = load_files(path)
+    # data1 = load_files(path)
     data = txt_data
     # print(data)
     duplicate_mode = "NoDuplicates"
@@ -309,7 +438,8 @@ def main():
     mode_short_names = "No_short_names"
     data, default_duplicates = find_and_prompt_short_names(data,default_duplicates,mode_short_names)
     # Step 2
-    data,default_duplicates = find_and_display_differing_duplicates(data,default_duplicates)
+    image_folder = get_path(PathType.RAW_IMAGE)
+    data,default_duplicates = find_and_display_differing_duplicates(data,default_duplicates,image_folder)
     # print(data)
     # Step 3
     # data = exclude_land_duplicates(data)

@@ -43,7 +43,7 @@ class TestIdentifyCard(unittest.TestCase):
         # check if folder contains the right images
         path_to_test_folder = get_path(PathType.RAW_IMAGE,verbose =0)
         contents_test_folder = return_folder_contents(path_to_test_folder)
-        expected_contents = ['1.jpg', '2.jpg', '2023-12-24', '3.jpg', '4.jpg']
+        expected_contents = ['1.jpg', '2.jpg', '2023-12-24', '3.jpg', '4.jpg', '5.jpg']
         self.assertEqual(contents_test_folder, expected_contents)
         
     def test_identify_card_with_image_1(self):
@@ -54,7 +54,9 @@ class TestIdentifyCard(unittest.TestCase):
         if error != None:
             print(error)
         self.assertEqual(error, None)
-   
+        self.assertGreater(card.size, 980000)
+
+                                                  
     def test_identify_card_with_image_2(self):
         # test without .jpg
         filename = "2"
@@ -63,7 +65,7 @@ class TestIdentifyCard(unittest.TestCase):
         if error != None:
             print(error)
         self.assertEqual(error, None)
-        
+        self.assertGreater(card.size, (1800 * 1300 *3))
     def test_identify_card_without_imagepath(self):
         # test if correct error when image is not found
         filename = "Non found.jpg"
