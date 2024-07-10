@@ -11,7 +11,6 @@ import cv2
 import time
 import os
 
-
 from img_from_adb import transfer_images_from_device
 from card_extraction import (extract_card)
 from process_card import (create_rois_from_filename)
@@ -20,7 +19,26 @@ from configuration_handler import MtGOCRData
 from path_manager import (get_path, PathType,return_folder_image_contents)
 from save_results import (write_results_to_txt, write_results_to_csv)
 from copy_img_to_data import (select_and_copy_images_to_data,move_content_to_subfolders)
-from user_dialog_cardname import user_cardname_confirmation
+from user_dialog_cardname import user_cardname_confirmation, checkif_scryfall_file_contains_UI
+import re
+
+def check_default_action(user_input):
+    try:
+        user_input = str(user_input)
+        
+        if re.findall(r'\b[p]{1}\b', user_input) == "p":
+            return "P"
+        elif re.findall(r'\b[f]{1}\b', user_input) == "f":
+            return "F"
+            
+        else:    
+            return None
+    
+    except ValueError:
+        return None
+    except IndexError:
+        return None
+
 
 def main_Card_Identification(mode:str = None, verbose =None):
     """
@@ -67,6 +85,7 @@ def main_Card_Identification(mode:str = None, verbose =None):
     cv2.destroyAllWindows()
     if verbose is None:
         verbose = 1
+
 
     if mode is None:
         mode = "quickstart"
@@ -129,7 +148,7 @@ def main_Card_Identification(mode:str = None, verbose =None):
             elif filename_new != last_processed_filename:
                 print("processing file")
                 card_data =  process_images(filename_new, card_data, mtg_ocr_config,scryfall_file, verbose)
-                cv2.waitKey(1)
+                # cv2.waitKey(1)
                 last_processed_filename = filename_new
                 transfer_images_from_device(source_folder, destination_folder, verbose=0)
             elif filename_new == last_processed_filename:
@@ -137,6 +156,22 @@ def main_Card_Identification(mode:str = None, verbose =None):
 
             else:
                 time.sleep(1)  # Sleep if the same image is still the newest
+    
+    elif mode == "no_pic":
+        while True:
+            
+            filename = "None.jpg"
+            cardnames = ({},[{}])
+            card_data =  process_images(filename, card_data, mtg_ocr_config,scryfall_file, verbose)
+            choice = input("Write set code, collector_number and dfeault action p (proxied) f (foil)")
+            card = None
+            if len(choice) > 4:
+                default_action = check_default_action(choice)
+                new_card =  checkif_scryfall_file_contains_UI(choice, filename, cardnames, card_data, card, scryfall_file, mtg_ocr_config, default_action)
+                if new_card != None:
+                    card_data = user_cardname_confirmation(filename, (new_card,[new_card]), card_data, card, scryfall_file, mtg_ocr_config, verbose, default_action)
+
+        
 
     else:
         if all_images ==[]:
@@ -231,13 +266,14 @@ def update_image_list(card_data):
 
 
 if __name__ == "__main__":
-
-    # cardnames = main_Card_Identification('adb')
+    print("Start")
+  #cardnames = main_Card_Identification('adb')
     verbose = 2
     # cardnames = main_Card_Identification('all_images', verbose)
     # cardnames = main_Card_Identification('adb')
     # main_Card_Identification('quickstart', verbose)
-    cardnames = main_Card_Identification('adb-live')
+    #cardnames = main_Card_Identification('adb-live')
+    cardnames = main_Card_Identification('no_pic')
 
 
 

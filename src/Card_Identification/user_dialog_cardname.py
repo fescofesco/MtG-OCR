@@ -9,7 +9,7 @@ author: Felix Scope
 
 
 import cv2
-# import datetime
+import datetime
 # import time
 # import os
 # from pathlib import Path
@@ -26,6 +26,7 @@ from card_extraction import (display_image)
 # from path_manager import (get_path, PathType,return_folder_image_contents)
 from save_results import (write_results_to_txt, write_results_to_csv)
 # from copy_img_to_data import (select_and_copy_images_to_data)
+
 
 
 def user_cardname_confirmation(filename, cardnames, card_data, card, scryfall_file, mtg_ocr_config, verbose=1, default_action=None):
@@ -45,7 +46,7 @@ def user_cardname_confirmation(filename, cardnames, card_data, card, scryfall_fi
     while True:
  
         
-        if verbose > 0:
+        if verbose > 0 and card !=None :
             display_image(card_infos["name"],card)
             cv2.waitKey(0)
             
@@ -90,7 +91,31 @@ def user_cardname_confirmation(filename, cardnames, card_data, card, scryfall_fi
         # Get user input
         choice = input("Enter your choice: ").upper()
         
-
+        
+        if len(choice) ==1:
+            try:
+                choice = int(choice)
+            except ValueError:
+                pass 
+            except TypeError:
+                try:
+                    print("error 101 wrong assignment of default option")
+                    cardnames[1][0] = cardnames[1][choice]
+                    card_data = user_cardname_confirmation(filename, cardnames, card_data, card, scryfall_file, 	mtg_ocr_config, verbose, default_action)
+    
+                except KeyError:
+                    card_data = user_cardname_confirmation(filename, cardnames, card_data, card, scryfall_file, 	mtg_ocr_config, verbose, default_action)
+        		
+            else:
+                try:
+    
+                    cardnames[1][0] = cardnames[1][choice]
+                    card_data = user_cardname_confirmation(filename, cardnames, card_data, card, scryfall_file, mtg_ocr_config, verbose, default_action)
+                    return card_data
+                except IndexError:
+                    print("wrong index")
+            pass
+        
         if len(choice) ==1:
             try:
                 choice = int(choice)
@@ -98,10 +123,10 @@ def user_cardname_confirmation(filename, cardnames, card_data, card, scryfall_fi
                 pass
             else:
                 try:
-                    
-                    cardnames[1][0] = cardnames[1][choice]
-                    card_data = user_cardname_confirmation(filename, cardnames, card_data, card, scryfall_file, mtg_ocr_config, verbose, default_action)
-                    return card_data
+                    # cardnames[1][0] = cardnames[1][choice]
+                    cardnames[0] = cardnames[1][choice]
+                    cardnames = user_cardname_confirmation(filename, cardnames, card_data, card, scryfall_file, mtg_ocr_config, verbose, default_action)
+                    return cardnames
                 except IndexError:
                     print("wrong index")
                     pass
@@ -131,7 +156,7 @@ def user_cardname_confirmation(filename, cardnames, card_data, card, scryfall_fi
     }
 
     # Perform the selected action
-    updated_card_data = actions[choice](filename, card_infos, card_data, card, scryfall_file, mtg_ocr_config, verbose, default_action=None)
+    updated_card_data = actions[choice](filename, cardnames, card_data, card, scryfall_file, mtg_ocr_config, verbose, default_action=None)
     
     cv2.destroyAllWindows()
     return updated_card_data
@@ -156,7 +181,8 @@ def save_card_infos(cardnames, card, filename, finish=None, status=None, maybebo
         tags = ""
     if notes is None:
         notes = ""
-        
+    if image_url is None:
+        image_url = ""
     try:
         card_infos['mtgo_id']
     except KeyError:
@@ -171,7 +197,7 @@ def save_card_infos(cardnames, card, filename, finish=None, status=None, maybebo
     card_set = '"' + card_infos["set"] + '"'
     ccn = '"' + card_infos["collector_number"] + '"'
 
-    color_id = "".join(card_infos["color_identity"])
+    color_id = "".join(card_infos["colors"])
 
 
     rarity =  card_infos["rarity"]
@@ -183,25 +209,30 @@ def save_card_infos(cardnames, card, filename, finish=None, status=None, maybebo
   
     status = status
     finish = finish 
-    maybeboard = ""
-    image_url = ""
-    # image_Back_URL = ""
+    maybeboard = "False"
+    
     tags = '"''"'
     Notes = '"''"'
     MTGO_ID =  card_infos["mtgo_id"]
-    entry = (name, cmc, type_line, color_id, card_set, ccn, rarity, color_category, status, finish, maybeboard, image_url, tags, Notes, MTGO_ID)
+    entry = (name, cmc, type_line, color_id, card_set, ccn, rarity, color_category, status, finish, maybeboard, image_url,image_back_url, tags, Notes, MTGO_ID)
     # entry =['"' + card_infos["name"]+'"', card_infos["cmc"], '"'+card_infos["type_line"]+'"', card_infos["color_identity"], '"'+card_infos["set"]+'"', card_infos["collector_number"], card_infos["rarity"],   [color.lower() for color in card_infos["color_identity"]],  status, finish, maybeboard, image_url, image_back_url, tags, notes, card_infos["mtgo_id"]] # Lowercase each element
     title = filename + "_" + card_infos["name"] + "_" + card_infos["collector_number"] + "_" + card_infos["set"] + "_finish: " + finish + "_status: " + status + ".jpg"
     path = get_path(PathType.RESULTS, title)
-    cv2.imwrite(path, card)
+    if card != None:
+        cv2.imwrite(path, card)
     return entry
 
 def save_infos(filename, cardnames, card_data, card, scryfall_file, mtg_ocr_config, verbose=1, default_action=None):
+      
     card_infos = cardnames[0]
-    if verbose >0: print(f"Save infos for {filename} in identified_DATETIME.txt")
+
+    if verbose >0: print(f"Save infos for {filename} as {cardnames[0]["name"]} in identified_DATETIME.txt")
     finish = ""
     status = "Owned"
-    card_data["identified_cards"].append((filename, save_card_infos(card_infos, card, filename, finish=finish, status=status)))
+    red_title = colorama.Fore.RED + f"{cardnames[0]['name']}, {cardnames[0]['collector_number']} {cardnames[0]['set'].upper()}. {status} {finish}"+ colorama.Fore.RESET 
+    print(red_title)
+
+    card_data["identified_cards"].append((filename, save_card_infos(cardnames, card, filename, finish=finish, status=status)))
     card_data["results"].append((filename, finish, status, card_infos))
 
     return card_data
@@ -211,7 +242,10 @@ def save_infos_foil(filename, cardnames, card_data, card, scryfall_file, mtg_ocr
     if verbose >0: print(f"Save infos for {filename} with finish foil in identified_DATETIME.txt")
     finish = "Foil"
     status = "Owned"
-    card_data["identified_cards"].append((filename, save_card_infos(card_infos, card, filename, finish=finish, status=status)))
+    red_title = colorama.Fore.RED + f"{cardnames[0]['name']}, {cardnames[0]['collector_number']} {cardnames[0]['set'].upper()}. {status} {finish}"+ colorama.Fore.RESET 
+    print(red_title)
+
+    card_data["identified_cards"].append((filename, save_card_infos(cardnames, card, filename, finish=finish, status=status)))
     card_data["results"].append((filename, finish, status, card_infos))
     return card_data
 def save_proxied(filename, cardnames, card_data, card, scryfall_file, mtg_ocr_config, verbose=1, default_action=None):
@@ -219,7 +253,10 @@ def save_proxied(filename, cardnames, card_data, card, scryfall_file, mtg_ocr_co
     if verbose >0: print(f"Save infos for {filename} with status Proxied")
     finish = ""
     status = "Proxied"
-    card_data["identified_cards"].append((filename, save_card_infos(card_infos, card, filename, finish=finish, status=status)))
+    red_title = colorama.Fore.RED + f"{cardnames[0]['name']}, {cardnames[0]['collector_number']} {cardnames[0]['set'].upper()}. {status} {finish}"+ colorama.Fore.RESET 
+    print(red_title)
+
+    card_data["identified_cards"].append((filename, save_card_infos(cardnames, card, filename, finish=finish, status=status)))
     card_data["results"].append((filename, finish, status, card_infos))
     return card_data
     

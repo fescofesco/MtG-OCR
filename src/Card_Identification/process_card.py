@@ -21,7 +21,6 @@ import os
 from card_extraction import extract_card
 from configuration_handler import MtGOCRData
 from path_manager import (get_path, PathType)
-from crop_to_text import crop_image
 
 def create_rois_from_filename(filename, mtg_ocr_config, card= None, verbose =0):
     """
@@ -176,13 +175,7 @@ def safe_card_roi(card_roi, title='filename', mode='roi', verbose=0):
     out_path_crop = f"{path_to_roi}/{title}_{mode}_{version}_crop.jpg"
 
 
-    if verbose >2:
-        print(f"Try to write ROIs {title}_{mode}_{version}.jpg")
-    try:
-        crop_image(out_path,out_path_crop, verbose = 0)
-    except TypeError:
-        pass
-    
+   
 
 
             

@@ -11,12 +11,13 @@ Start by installing the required modules.
 ```
 
 Install [pytesseract](https://github.com/UB-Mannheim/tesseract).
-This version was tested with `tesseract-ocr-w64-setup-5.3.3.20231005.exe`.
+This version was tested with `tesseract-ocr-w64-setup-5.3.4.20240503.exe` 
 Set pytesseract path to `C:/Programm Files(x86)/Tesseract-OCR/`.
 
  This step is optional:
  To use the `adb` mode, install [adb](https://github.com/google/python-adb) first. Enable debugging on your android device. See [https://developer.android.com/tools/adb](https://developer.android.com/tools/adb) for an explanation on how to enable debugging.
  Prepare a folder named `MTG-OCR` on your android device and safe card images there.
+Set `adb` to path.
 
 The package is not uploaded to pip yet. The modules cannot be imported via the package path, yet.
 Here is the instruction how it will be implemented [stackexchange](https://stackoverflow.com/questions/15746675/how-to-write-a-python-module-package)

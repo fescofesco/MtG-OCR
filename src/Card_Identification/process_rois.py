@@ -629,6 +629,7 @@ if __name__ == "__main__":
     pytesseract.pytesseract.tesseract_cmd = \
     r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
+
     #  Visage of Dread, LCI 
     filename = "1.jpg" 
   

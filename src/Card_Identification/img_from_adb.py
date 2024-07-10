@@ -200,4 +200,4 @@ if __name__ == "__main__":
     source_folder= "MTG-OCR"
     destination_folder = get_path(PathType.RAW_IMAGE)
     transfer_images_from_device(source_folder, 
-                        destination_folder, verbose = 2)
+                        destination_folder, verbose = 4)
