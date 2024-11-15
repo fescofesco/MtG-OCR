@@ -706,7 +706,7 @@ The default values are defining two edges of a rectanlge of the card snippet
                        # Save the updated configuration
                        self.save_config()
     
-                                    # Close the file before reloading
+                       # Close the file before reloading
                        file.close()
         
                        # List files in the current directory
